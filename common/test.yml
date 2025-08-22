@@ -1,0 +1,16 @@
+services:
+  payment-test-redis:
+    container_name: payment-test-redis
+    image: valkey/valkey:8.0.1
+    ports:
+      - 16390:6379
+    volumes:
+      - kokomen-payment-test-redis-data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  kokomen-payment-test-redis-data:

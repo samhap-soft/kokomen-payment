@@ -1,0 +1,60 @@
+spring:
+  jpa:
+    open-in-view: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    validate-on-migrate: true
+    out-of-order: false
+    clean-disabled: true
+---
+# local profile
+spring:
+  config:
+    activate:
+      on-profile: local
+  datasource:
+    url: jdbc:mysql://kokomen-payment-local-mysql:3306/kokomen-payment-local
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    database: mysql
+    show-sql: true
+    hibernate:
+      ddl-auto: validate
+
+---
+# dev profile
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    url: jdbc:mysql://kokomen-payment-mysql-dev:3306/kokomen-payment-dev
+    username: ${SPRING_DATASOURCE_USERNAME_DEV}
+    password: ${SPRING_DATASOURCE_PASSWORD_DEV}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    database: mysql
+    show-sql: false
+    hibernate:
+      ddl-auto: validate
+---
+# prod profile
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    url: ${PAYMENT_DATASOURCE_URL_PROD}
+    username: ${PAYMENT_DATASOURCE_USERNAME_PROD}
+    password: ${PAYMENT_DATASOURCE_PASSWORD_PROD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    database: mysql
+    show-sql: false
+    hibernate:
+      ddl-auto: validate

@@ -1,0 +1,68 @@
+management:
+  server:
+    address: 0.0.0.0
+    port: 8001
+spring:
+  application:
+    name: kokomen-payment-api
+  profiles:
+    include:
+      - domain
+      - common
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+    default-property-inclusion: non_null
+  session:
+    store-type: redis
+server:
+  servlet:
+    session:
+      timeout: 24h
+      cookie:
+        name: JSESSIONID
+        path: /
+        http-only: true
+        same-site: lax
+        max-age: 86400
+
+---
+# local profile
+spring:
+  config:
+    activate:
+      on-profile: local
+cors:
+  allowed-origins: http://localhost:8080
+server:
+  servlet:
+    session:
+      cookie:
+        secure: true
+---
+# dev profile
+spring:
+  config:
+    activate:
+      on-profile: dev
+cors:
+  allowed-origins: https://dev.kokomen.kr, https://kokomen.kr:3000, https://local.kokomen.kr:3000, http://local.kokomen.kr:3000, https://www.webview-dev.kokomen.kr, https://webview-dev.kokomen.kr
+server:
+  servlet:
+    session:
+      cookie:
+        domain: kokomen.kr
+        secure: false
+---
+# prod profile
+spring:
+  config:
+    activate:
+      on-profile: prod
+cors:
+  allowed-origins: https://kokomen.kr, https://www.kokomen.kr, https://www.webview.kokomen.kr, https://webview.kokomen.kr
+server:
+  servlet:
+    session:
+      cookie:
+        domain: kokomen.kr
+        secure: true

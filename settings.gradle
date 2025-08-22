@@ -1,0 +1,6 @@
+rootProject.name = 'kokomen-payment'
+
+include 'common'
+include 'domain'
+include 'api'
+include 'internal'

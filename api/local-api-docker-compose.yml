@@ -1,0 +1,18 @@
+services:
+  kokomen-payment-local-api:
+    container_name: kokomen-payment-local-api
+    build:
+      dockerfile: ./Dockerfile
+      no_cache: true
+    ports:
+      - 8200:8080
+      - 8201:8001
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+    networks:
+      - local-kokomen-net
+
+networks:
+  local-kokomen-net:
+    external: true
+    driver: bridge

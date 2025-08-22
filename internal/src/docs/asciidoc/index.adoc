@@ -1,0 +1,19 @@
+= Kokomen API Guide
+:doctype: book
+:icons: font
+:toc: left
+:toc-title: Table of Contents
+:toclevels: 2
+:source-highlighter: highlightjs
+:sectlinks:
+:sectnums:
+
+== 결제
+
+=== 결제 XXX
+
+include::{snippetsDir}/payment-xxx/http-request.adoc[]
+include::{snippetsDir}/payment-xxx/http-response.adoc[]
+include::{snippetsDir}/payment-xxx/request-fields.adoc[]
+include::{snippetsDir}/payment-xxx/curl-request.adoc[]
+

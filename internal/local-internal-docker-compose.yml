@@ -1,0 +1,19 @@
+services:
+  # ✅ Payment Internal Spring Application
+  kokomen-payment-local-internal:
+    container_name: kokomen-payment-local-internal
+    build:
+      dockerfile: ./Dockerfile
+      no_cache: true
+    ports:
+      - 8300:8080
+      - 8301:8000
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+    networks:
+      - local-kokomen-net
+
+networks:
+  local-kokomen-net:
+    external: true
+    driver: bridge

@@ -1,0 +1,35 @@
+volumes:
+  kokomen-payment-local-mysql-data:
+
+services:
+  # ✅ MySQL
+  kokomen-payment-local-mysql:
+    image: mysql:8.4.5
+    container_name: kokomen-payment-local-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: kokomen-payment-local
+      TZ: Asia/Seoul
+      LANG: C.UTF-8
+      MYSQL_INIT_CONNECT: "SET NAMES utf8mb4"
+    command:
+      [
+        "mysqld",
+        "--character-set-server=utf8mb4",
+        "--collation-server=utf8mb4_general_ci"
+      ]
+    expose:
+      - 3306
+    volumes:
+      - kokomen-payment-local-mysql-data:/var/lib/mysql
+    healthcheck:
+      test: [ "CMD", "mysql", "-u", "root", "-proot", "-e", "SELECT 1" ]
+      interval: 5s
+      retries: 10
+    networks:
+      - local-kokomen-net
+
+networks:
+  local-kokomen-net:
+    external: true
+    driver: bridge

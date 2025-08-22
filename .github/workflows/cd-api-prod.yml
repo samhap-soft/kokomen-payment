@@ -1,0 +1,107 @@
+name: CD API PROD
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      api_changed: ${{ steps.filter.outputs.api }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          base: main
+          filters: |
+            api:
+              - 'api/**'
+
+  build-api:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.api_changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'corretto'
+          java-version: '17'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Grant execute permission for run-test-mysql.sh
+        run: chmod +x run-test-mysql.sh
+        working-directory: ./domain
+
+      - name: Grant execute permission for run-test-redis.sh
+        run: chmod +x run-test-redis.sh
+        working-directory: ./common
+
+      - name: Run test mysql script
+        run: ./run-test-mysql.sh
+        working-directory: ./domain
+
+      - name: Run test redis script
+        run: ./run-test-redis.sh
+        working-directory: ./common
+
+      - name: Test & Build api only
+        run: ./gradlew :api:build
+
+      - name: Sign in Dockerhub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build the Docker image
+        run: docker build -f ./Dockerfile --platform linux/arm64 --no-cache -t samhap/kokomen-payment-api:prod .
+        working-directory: ./api
+
+      - name: Push the Docker Image to Dockerhub
+        run: docker push samhap/kokomen-payment-api:prod
+        working-directory: ./api
+
+  deploy-api:
+    needs: build-api
+    runs-on: [ self-hosted, prod-payment ]
+
+    strategy:
+      matrix:
+        runner: [ prod-payment-a, prod-payment-b ]
+
+    steps:
+      - name: Stop existing container
+        run: sudo docker rm -f kokomen-payment-api || true
+
+      - name: Remove old API Docker image
+        run: |
+          if sudo docker images samhap/kokomen-payment-api:prod -q | grep -q .; then
+            sudo docker rmi -f samhap/kokomen-payment-api:prod || true
+          fi
+
+      - name: pull docker compose yaml files
+        working-directory: /home/ubuntu
+        run: |
+          [ -d kokomen-payment ] || git clone --filter=blob:none --no-checkout https://github.com/samhap-soft/kokomen-payment.git
+          cd kokomen-payment
+          git sparse-checkout init --cone
+          git fetch origin main
+          git checkout main
+          git sparse-checkout set docker/prod
+          git pull origin main
+
+      - name: Docker Image pull
+        run: sudo docker pull samhap/kokomen-payment-api:prod
+
+      - name: Docker run
+        working-directory: /home/ubuntu
+        run: |
+          export HOSTNAME=$(hostname)
+          cd kokomen-payment/docker/prod
+          sudo -E docker compose -f docker-compose-prod.yml up -d kokomen-payment-api
