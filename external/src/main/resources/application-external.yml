@@ -1,0 +1,22 @@
+# common configuration for all profiles
+---
+# local profile
+spring:
+  config:
+    activate:
+      on-profile: local
+
+tosspayments:
+  widget-secret-key: test_gsk_docs_OaPz8L5KdmQXkzRz3y47BMw6
+---
+# dev profile
+spring:
+  config:
+    activate:
+      on-profile: dev
+---
+# prod profile
+spring:
+  config:
+    activate:
+      on-profile: prod
