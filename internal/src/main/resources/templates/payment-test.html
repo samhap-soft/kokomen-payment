@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>꼬꼬면 토큰 결제 테스트</title>
+    <script src="https://js.tosspayments.com/v2/standard"></script>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            background-color: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .order-info {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .order-info h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+
+        .order-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .total-amount {
+            font-size: 20px;
+            font-weight: bold;
+            color: #007bff;
+            border-top: 2px solid #dee2e6;
+            padding-top: 15px;
+            margin-top: 15px;
+        }
+
+        #payment-method {
+            margin-bottom: 20px;
+        }
+
+        #agreement {
+            margin-bottom: 20px;
+        }
+
+        .payment-button {
+            width: 100%;
+            padding: 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .payment-button:hover {
+            background-color: #0056b3;
+        }
+
+        .payment-button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>꼬꼬면 토큰 결제</h1>
+
+    <div class="order-info">
+        <h3>주문 정보</h3>
+        <div class="order-item">
+            <span>토큰 10개</span>
+            <span>1,000원</span>
+        </div>
+        <div class="order-item total-amount">
+            <span>총 결제금액</span>
+            <span>1,000원</span>
+        </div>
+    </div>
+
+    <!-- 결제 UI -->
+    <div id="payment-method"></div>
+
+    <!-- 약관 UI -->
+    <div id="agreement"></div>
+
+    <!-- 결제하기 버튼 -->
+    <button id="payment-button" class="payment-button" disabled>
+        결제하기
+    </button>
+
+    <div class="loading" id="loading">
+        <p>결제 처리 중...</p>
+    </div>
+</div>
+
+<script>
+    // 토스페이먼츠 초기화
+    const tossPayments = TossPayments("test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm");
+
+    // 결제위젯 인스턴스 생성 (비회원 결제)
+    const widgets = tossPayments.widgets({
+        customerKey: TossPayments.ANONYMOUS
+    });
+
+    // 결제 금액 설정
+    const amount = 1000;
+    widgets.setAmount({
+        currency: 'KRW',
+        value: amount
+    });
+
+    // 결제 UI 렌더링
+    widgets.renderPaymentMethods({
+        selector: "#payment-method",
+        variantKey: "DEFAULT"
+    }).then(paymentMethodWidget => {
+        console.log("결제 UI 렌더링 완료");
+    }).catch(error => {
+        console.error("결제 UI 렌더링 실패:", error);
+    });
+
+    // 약관 UI 렌더링
+    widgets.renderAgreement({
+        selector: "#agreement",
+        variantKey: "AGREEMENT"
+    }).then(agreementWidget => {
+        console.log("약관 UI 렌더링 완료");
+
+        // 약관 동의 상태 변경 이벤트 구독
+        agreementWidget.on('agreementStatusChange', agreementStatus => {
+            const paymentButton = document.getElementById('payment-button');
+            if (agreementStatus.agreedRequiredTerms) {
+                paymentButton.disabled = false;
+            } else {
+                paymentButton.disabled = true;
+            }
+        });
+    }).catch(error => {
+        console.error("약관 UI 렌더링 실패:", error);
+    });
+
+    // 주문번호 생성 함수
+    function generateOrderId() {
+        return 'ORDER_' + Math.random().toString(36).substr(2, 9).toUpperCase() + '_' + Date.now();
+    }
+
+    // 테스트용 memberId와 metadata 생성
+    const testMemberId = 1;
+    const testMetadata = {
+        productType: "KOKOMEN_TOKEN",
+        quantity: "10"
+    };
+
+    // 결제하기 버튼 클릭 이벤트
+    document.getElementById('payment-button').addEventListener('click', function () {
+        const loading = document.getElementById('loading');
+        loading.style.display = 'block';
+
+        // successUrl에 memberId와 metadata를 URL 파라미터로 포함
+        const successUrl = window.location.origin + "/payment/success" + 
+            "?memberId=" + testMemberId + 
+            "&metadata=" + encodeURIComponent(JSON.stringify(testMetadata));
+
+        widgets.requestPayment({
+            orderId: generateOrderId(),
+            orderName: "꼬꼬면 토큰 10개",
+            successUrl: successUrl,
+            failUrl: window.location.origin + "/payment/fail",
+            customerEmail: "ohsanghoon@google.com",
+            customerName: "오상훈",
+            customerMobilePhone: "01012345678",
+            metadata: testMetadata
+        }).catch(error => {
+            console.error("결제 요청 실패:", error);
+            loading.style.display = 'none';
+            alert('결제 요청 중 오류가 발생했습니다.');
+        });
+    });
+</script>
+</body>
+</html>
