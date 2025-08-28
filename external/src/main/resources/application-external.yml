@@ -5,7 +5,6 @@ spring:
   config:
     activate:
       on-profile: local
-
 tosspayments:
   widget-secret-key: test_gsk_docs_OaPz8L5KdmQXkzRz3y47BMw6
 ---
@@ -14,6 +13,8 @@ spring:
   config:
     activate:
       on-profile: dev
+tosspayments:
+  widget-secret-key: test_gsk_docs_OaPz8L5KdmQXkzRz3y47BMw6
 ---
 # prod profile
 spring:
