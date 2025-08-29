@@ -61,7 +61,8 @@ public record TosspaymentsConfirmResponse(
                 this.easyPay() != null ? this.easyPay().amount() : null,
                 this.easyPay() != null ? this.easyPay().discountAmount() : null,
                 this.country,
-                this.failure() != null ? this.failure().code() : null
+                this.failure() != null ? this.failure().code() : null,
+                this.failure() != null ? this.failure().message() : null
         );
     }
 }

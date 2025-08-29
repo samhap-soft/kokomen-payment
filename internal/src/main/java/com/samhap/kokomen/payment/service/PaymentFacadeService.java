@@ -39,7 +39,7 @@ public class PaymentFacadeService {
             tosspaymentsPayment.validateTosspaymentsResult(tosspaymentsConfirmResponse.paymentKey(), tosspaymentsConfirmResponse.orderId(),
                     tosspaymentsConfirmResponse.totalAmount(), tosspaymentsConfirmResponse.metadata());
             TosspaymentsPaymentResult tosspaymentsPaymentResult = tosspaymentsConfirmResponse.toTosspaymentsPaymentResult(tosspaymentsPayment);
-            tosspaymentsTransactionService.applyTosspaymentsPaymentResult(tosspaymentsPaymentResult, PaymentState.APPROVED);
+            tosspaymentsTransactionService.applyTosspaymentsPaymentResult(tosspaymentsPaymentResult, PaymentState.COMPLETED);
             return tosspaymentsConfirmResponse;
         } catch (HttpClientErrorException e) {
             TosspaymentsConfirmResponse tosspaymentsConfirmResponse = e.getResponseBodyAs(TosspaymentsConfirmResponse.class);

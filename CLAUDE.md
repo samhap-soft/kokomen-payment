@@ -85,6 +85,13 @@ Custom exceptions with HTTP status mapping:
 
 Global exception handler in `GlobalExceptionHandler` class.
 
+### Pagination
+- **Always use Spring Data's `Pageable`** for pagination
+- Controller methods receive `Pageable` as parameter with `@PageableDefault` annotation
+- Example: `@PageableDefault(size = 10) Pageable pageable`
+- Service methods accept `Pageable` directly without decomposing into page/size
+- Repository methods use `Pageable` for database queries
+
 ## Code Style & Conventions
 
 ### Java Style
@@ -110,6 +117,18 @@ Global exception handler in `GlobalExceptionHandler` class.
 - Spring annotations before Lombok annotations
 - Domain entities override `toString()`
 
+### DTO-Entity Conversion
+- **DTO → Entity**: Conversion methods are placed in DTO classes (e.g., `dto.toEntity()`)
+- **Entity → DTO**: Conversion methods are also placed in DTO classes as static factory methods or in service layer
+- DTOs are responsible for transformation logic to keep entities clean
+- Example: `ConfirmRequest.toTosspaymentsPayment()` in DTO class
+
+### Transaction Management
+- **@Transactional always on methods, not classes**
+- Place `@Transactional(readOnly = true)` on read-only service methods
+- Place `@Transactional` on write service methods
+- Never put @Transactional at class level
+
 ### Testing Conventions
 - Test methods named in Korean
 - No `@DisplayName` annotations
@@ -130,6 +149,20 @@ Naming: `V{version}__{description}.sql`
 ### Test Containers
 MySQL 8.4.5 containers for testing (port 13308)
 Configuration in `domain/test.yml`
+
+## Commit Message Convention
+
+Follow Angular commit message convention:
+- **feat**: A new feature for the user
+- **fix**: A bug fix
+- **docs**: Documentation changes
+- **style**: Changes that don't affect code meaning (formatting, etc.)
+- **refactor**: Code changes that neither fix bugs nor add features
+- **test**: Adding or updating tests
+- **chore**: Changes to build process, tools, dependencies
+
+Format: `<type>: <description>`
+Example: `feat: 결제 기능 개발`
 
 ## Important Notes
 
