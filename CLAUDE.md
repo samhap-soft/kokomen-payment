@@ -4,136 +4,138 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is the Kokomen Payment Service, a Spring Boot multi-module application that handles payment management. The project consists of four main modules:
+Kokomen Payment (꼬꼬면 결제) is a multi-module Spring Boot payment system implementing Tosspayments integration. The project uses Java 17, Spring Boot 3.4.5, MySQL, Redis, and follows a domain-driven design with layered architecture.
 
-- **api**: External API server for client-facing payment endpoints
-- **internal**: Internal API server for service-to-service payment creation
-- **domain**: Core domain entities and repositories (shared by api and internal)
-- **common**: Shared configurations and utilities (Redis, logging, exceptions)
+## Module Structure
 
-## Architecture
+- **api**: External-facing REST API module with authentication and member services
+- **internal**: Internal payment processing module with Tosspayments integration
+- **domain**: Core domain entities and repositories (JPA/Hibernate)
+- **common**: Shared configurations (Redis, logging)
+- **external**: External API clients (Tosspayments)
 
-### Module Structure
-```
-kokomen-payment/
-├── api/          # External API (port 8080, management: 8001)
-├── internal/     # Internal API for service-to-service communication
-├── domain/       # JPA entities, repositories, Flyway migrations
-└── common/       # Shared utilities, Redis config, exceptions
-```
+## Common Commands
 
-### Technology Stack
-- **Java 17** with Spring Boot 3.4.5
-- **Spring Data JPA** with MySQL
-- **Redis** for session management (API module)
-- **Flyway** for database migrations
-- **Gradle** multi-module build system
-- **Docker Compose** for local development
-- **Spring REST Docs** with AsciiDoctor
-
-### Key Domain Concepts
-- **Notification**: Core entity with state management (UNREAD/READ)
-- **NotificationType**: INTERVIEW_LIKE, ANSWER_LIKE, INTERVIEW_VIEW_COUNT
-- **NotificationPayload**: Polymorphic JSON payload storage with custom converter
-
-## Common Development Commands
-
-### Build Commands
+### Build & Test
 ```bash
+# Run all tests
+./gradlew test
+
 # Build entire project
 ./gradlew clean build
 
 # Build specific module
 ./gradlew :api:build
 ./gradlew :internal:build
-./gradlew :domain:build
-./gradlew :common:build
-
-# Build without tests
-./gradlew build -x test
-```
-
-### Test Commands
-```bash
-# Run all tests
-./gradlew test
 
 # Run tests for specific module
 ./gradlew :api:test
 ./gradlew :internal:test
-./gradlew :domain:test
-
-# Run specific test class
-./gradlew test --tests NotificationApiControllerTest
-./gradlew test --tests NotificationInternalControllerTest
 ```
 
 ### Local Development
 ```bash
-# Start API module with dependencies
+# Start API service locally (includes MySQL & Redis)
 cd api && ./run-local-api.sh
 
-# Start Internal module with dependencies
+# Start Internal service locally  
 cd internal && ./run-local-internal.sh
 
-# Start only test databases
+# Start test MySQL container
 cd domain && ./run-test-mysql.sh
+
+# Start test Redis container
 cd common && ./run-test-redis.sh
 ```
 
-### Docker Commands
-The project uses Docker Compose for local development with MySQL and Redis:
-```bash
-# API module local environment
-docker compose -f api/local-api-docker-compose.yml up -d
+## Architecture & Key Patterns
 
-# Internal module local environment
-docker compose -f internal/local-internal-docker-compose.yml up -d
-
-# Domain test MySQL
-docker compose -f domain/test.yml up -d payment-test-mysql
-
-# Common test Redis
-docker compose -f common/test.yml up -d payment-test-redis
+### Package Structure
+Domain-first organization followed by layered architecture:
+```
+domain/
+├── controller/
+├── service/
+├── repository/
+├── domain/
+└── dto/
+global/
+├── config/
+├── exception/
+└── infrastructure/
 ```
 
-## Important Files and Patterns
+### Testing Strategy
+- **Integration tests preferred**: Uses real beans with MySQL test containers (not H2)
+- **DatabaseCleaner pattern**: Tests use `MySQLDatabaseCleaner` instead of `@Transactional` for proper isolation
+- **Base test classes**: `BaseTest` for services, `BaseControllerTest` for controllers with MockMvc
+- **Test naming**: Korean method names without `@DisplayName`
 
-### Authentication
-- API module uses `@Authentication` annotation for member authentication
-- `MemberAuthArgumentResolver` handles member ID extraction from session
-- Redis session management with Spring Session
+### Payment Flow
+1. **PaymentFacadeService**: Orchestrates payment confirmation flow
+2. **TosspaymentsTransactionService**: Manages transactional operations
+3. **TosspaymentsPaymentService**: Handles payment entity operations
+4. **TosspaymentsClient**: External API communication with Tosspayments
 
-### Database Migrations
-- Flyway migrations located in `domain/src/main/resources/db/migration/`
-- Naming convention: `V{version}__{description}.sql`
+### Exception Handling
+Custom exceptions with HTTP status mapping:
+- `BadRequestException` (400)
+- `UnauthorizedException` (401)
+- `ForbiddenException` (403)
 
-### Configuration Profiles
-- **local**: Local development with CORS for localhost:8080
-- **dev**: Development environment with multiple allowed origins
-- **prod**: Production environment with strict CORS settings
-- **test**: Test configuration for integration tests
+Global exception handler in `GlobalExceptionHandler` class.
 
-### Testing Patterns
-- Base test classes: `BaseTest`, `BaseControllerTest`
-- Database cleanup: `MySQLDatabaseCleaner` for test isolation
-- Fixture builders: `NotificationFixtureBuilder` for test data
+## Code Style & Conventions
 
-### API Documentation
-- REST Docs generated during tests
-- Documentation available at `/docs` endpoint after build
-- Source files in `src/docs/asciidoc/`
+### Java Style
+- Based on Woowacourse Java Style Guide (Google Java Style variant)
+- **Indentation**: 4 spaces
+- **Column limit**: 120 characters (general), 160 (maximum)
+- **Line wrapping**: +8 spaces for continuation lines
 
-## Module Dependencies
-```
-api → domain, common
-internal → domain, common
-domain → (standalone, contains entities)
-common → (standalone, contains shared utilities)
-```
+### Method Parameter Rules
+- **Records/Controllers**: One parameter per line
+- **Annotated methods or >160 chars**: One per line
+- **Regular methods**: No line breaks
 
-## Port Configuration
-- API Server: 8080 (application), 8001 (management/actuator)
-- Internal Server: Default Spring Boot port
-- Test MySQL: Configured in docker-compose
-- Test Redis: Configured in docker-compose
+### Naming Conventions
+- **Methods**: action + domain format (e.g., `saveMember()`)
+- **Read vs Find**: `read` throws exception if not found, `find` returns Optional/empty
+- **No `get-` prefix** except for actual getters
+- **No `not` in validation methods**
+- **No `final` in method parameters**
+
+### Lombok Usage
+- Use for constructors, getters/setters
+- Spring annotations before Lombok annotations
+- Domain entities override `toString()`
+
+### Testing Conventions
+- Test methods named in Korean
+- No `@DisplayName` annotations
+- Given-When-Then structure
+- Test data initialized in given section (no data.sql)
+
+## Database & Persistence
+
+### Flyway Migrations
+Location: `domain/src/main/resources/db/migration/`
+Naming: `V{version}__{description}.sql`
+
+### DDL Conventions
+- **ENUM columns**: Always use MySQL ENUM type instead of VARCHAR for enum fields
+  - Example: `ALTER TABLE table_name ADD COLUMN status ENUM('ACTIVE', 'INACTIVE') NOT NULL`
+  - This ensures type safety at the database level and reduces storage size
+
+### Test Containers
+MySQL 8.4.5 containers for testing (port 13308)
+Configuration in `domain/test.yml`
+
+## Important Notes
+
+1. **No wildcard imports** in Java files
+2. **MDC logging context** must be preserved across threads
+3. **Security**: Never log or commit secrets/keys
+4. **Git commits**: Never commit unless explicitly requested
+5. **Documentation**: Don't create README/docs unless requested
+6. **Testing**: Always verify with existing test commands before suggesting new ones
