@@ -1,0 +1,4 @@
+ALTER TABLE tosspayments_payment_result
+ADD COLUMN cancel_reason VARCHAR(200) DEFAULT NULL,
+ADD COLUMN canceled_at DATETIME DEFAULT NULL,
+ADD COLUMN cancel_status VARCHAR(50) DEFAULT NULL;

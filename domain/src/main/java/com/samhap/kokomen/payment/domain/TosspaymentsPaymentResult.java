@@ -97,6 +97,15 @@ public class TosspaymentsPaymentResult extends BaseEntity {
     @Column(name = "failure_message")
     private String failureMessage;
 
+    @Column(name = "cancel_reason")
+    private String cancelReason;
+
+    @Column(name = "canceled_at")
+    private LocalDateTime canceledAt;
+
+    @Column(name = "cancel_status")
+    private String cancelStatus;
+
     public TosspaymentsPaymentResult(TosspaymentsPayment tosspaymentsPayment, PaymentType type, String mId, String currency, Long totalAmount, String method,
                                      Long balanceAmount, TosspaymentsStatus tosspaymentsStatus, LocalDateTime requestedAt, LocalDateTime approvedAt,
                                      String lastTransactionKey, Long suppliedAmount, Long vat, Long taxFreeAmount, Long taxExemptionAmount,
@@ -125,5 +134,15 @@ public class TosspaymentsPaymentResult extends BaseEntity {
         this.country = country;
         this.failureCode = failureCode;
         this.failureMessage = failureMessage;
+    }
+
+    public void updateCancelInfo(String cancelReason, LocalDateTime canceledAt, Long easyPayDiscountAmount, 
+                                 String lastTransactionKey, String cancelStatus, TosspaymentsStatus tosspaymentsStatus) {
+        this.cancelReason = cancelReason;
+        this.canceledAt = canceledAt;
+        this.easyPayDiscountAmount = easyPayDiscountAmount;
+        this.lastTransactionKey = lastTransactionKey;
+        this.cancelStatus = cancelStatus;
+        this.tosspaymentsStatus = tosspaymentsStatus;
     }
 }
