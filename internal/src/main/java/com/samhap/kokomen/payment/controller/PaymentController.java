@@ -1,6 +1,7 @@
 package com.samhap.kokomen.payment.controller;
 
 import com.samhap.kokomen.payment.service.PaymentFacadeService;
+import com.samhap.kokomen.payment.service.dto.CancelRequest;
 import com.samhap.kokomen.payment.service.dto.ConfirmRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,12 @@ public class PaymentController {
     @PostMapping("/confirm")
     public ResponseEntity<Void> confirmPayment(@RequestBody @Valid ConfirmRequest request) {
         paymentFacadeService.confirmPayment(request);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/cancel")
+    public ResponseEntity<Void> cancelPayment(@RequestBody @Valid CancelRequest request) {
+        paymentFacadeService.cancelPayment(request);
         return ResponseEntity.noContent().build();
     }
 }
