@@ -16,4 +16,10 @@ public class TosspaymentsPaymentResultService {
     public TosspaymentsPaymentResult save(TosspaymentsPaymentResult tosspaymentsPaymentResult) {
         return tosspaymentsPaymentResultRepository.save(tosspaymentsPaymentResult);
     }
+
+    @Transactional(readOnly = true)
+    public TosspaymentsPaymentResult readByTosspaymentsPaymentId(Long tosspaymentsPaymentId) {
+        return tosspaymentsPaymentResultRepository.findByTosspaymentsPaymentId(tosspaymentsPaymentId)
+                .orElseThrow(() -> new IllegalStateException("해당 결제의 결과 정보가 존재하지 않습니다. tosspaymentsPaymentId: " + tosspaymentsPaymentId));
+    }
 }

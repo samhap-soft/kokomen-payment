@@ -3,6 +3,8 @@ package com.samhap.kokomen.payment.service;
 import com.samhap.kokomen.payment.domain.PaymentState;
 import com.samhap.kokomen.payment.domain.TosspaymentsPayment;
 import com.samhap.kokomen.payment.domain.TosspaymentsPaymentResult;
+import com.samhap.kokomen.payment.external.dto.TosspaymentsCancel;
+import com.samhap.kokomen.payment.external.dto.TosspaymentsPaymentResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,5 +21,25 @@ public class TosspaymentsTransactionService {
         TosspaymentsPayment tosspaymentsPayment = tosspaymentsPaymentService.readById(tosspaymentsPaymentResult.getTosspaymentsPayment().getId());
         tosspaymentsPayment.updateState(paymentState);
         return tosspaymentsPaymentResultService.save(tosspaymentsPaymentResult);
+    }
+
+    @Transactional
+    public void applyCancelResult(TosspaymentsPaymentResponse response) {
+        TosspaymentsPayment payment = tosspaymentsPaymentService.readByPaymentKey(response.paymentKey());
+        payment.updateState(PaymentState.CANCELED);
+
+        TosspaymentsPaymentResult result = tosspaymentsPaymentResultService.readByTosspaymentsPaymentId(payment.getId());
+
+        if (response.cancels() != null && !response.cancels().isEmpty()) {
+            TosspaymentsCancel tosspaymentsCancel = response.cancels().get(0);
+            result.updateCancelInfo(
+                    tosspaymentsCancel.cancelReason(),
+                    tosspaymentsCancel.canceledAt(),
+                    tosspaymentsCancel.easyPayDiscountAmount(),
+                    response.lastTransactionKey(),
+                    tosspaymentsCancel.cancelStatus(),
+                    response.status()
+            );
+        }
     }
 }
