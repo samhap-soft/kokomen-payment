@@ -1,15 +1,16 @@
 package com.samhap.kokomen.payment.external;
 
+import com.samhap.kokomen.global.annotation.ExecutionTimer;
 import com.samhap.kokomen.payment.external.dto.TosspaymentsConfirmRequest;
-import com.samhap.kokomen.payment.external.dto.TosspaymentsPaymentResponse;
 import com.samhap.kokomen.payment.external.dto.TosspaymentsPaymentCancelRequest;
+import com.samhap.kokomen.payment.external.dto.TosspaymentsPaymentResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 
 @Slf4j
-// @ExecutionTimer
+@ExecutionTimer
 @Component
 public class TosspaymentsClient {
 
