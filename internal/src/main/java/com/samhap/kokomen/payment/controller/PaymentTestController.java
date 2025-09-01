@@ -24,4 +24,9 @@ public class PaymentTestController {
     public String paymentFailPage() {
         return "payment-fail";
     }
+
+    @GetMapping("/payment/refund")
+    public String paymentRefundPage() {
+        return "payment-refund";
+    }
 }
