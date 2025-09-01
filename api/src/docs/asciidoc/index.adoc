@@ -1,4 +1,4 @@
-= Kokomen API Guide
+= Kokomen Payment API Guide
 :doctype: book
 :icons: font
 :toc: left
@@ -10,10 +10,12 @@
 
 == 결제
 
-=== 결제 XXX
+=== 나의 결제 내역 조회
 
-include::{snippetsDir}/payment-xxx/http-request.adoc[]
-include::{snippetsDir}/payment-xxx/http-response.adoc[]
-include::{snippetsDir}/payment-xxx/request-fields.adoc[]
-include::{snippetsDir}/payment-xxx/curl-request.adoc[]
+include::{snippetsDir}/payment-findMyPayments/http-request.adoc[]
+include::{snippetsDir}/payment-findMyPayments/query-parameters.adoc[]
+include::{snippetsDir}/payment-findMyPayments/request-cookies.adoc[]
+include::{snippetsDir}/payment-findMyPayments/http-response.adoc[]
+include::{snippetsDir}/payment-findMyPayments/response-fields.adoc[]
+include::{snippetsDir}/payment-findMyPayments/curl-request.adoc[]
 

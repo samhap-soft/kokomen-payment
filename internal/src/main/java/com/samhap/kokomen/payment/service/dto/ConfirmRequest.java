@@ -2,6 +2,7 @@ package com.samhap.kokomen.payment.service.dto;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.samhap.kokomen.global.infrastructure.ObjectToStringDeserializer;
+import com.samhap.kokomen.payment.domain.ServiceType;
 import com.samhap.kokomen.payment.domain.TosspaymentsPayment;
 import com.samhap.kokomen.payment.external.dto.TosspaymentsConfirmRequest;
 import jakarta.validation.constraints.NotBlank;
@@ -20,7 +21,9 @@ public record ConfirmRequest(
         Long memberId,
         @JsonDeserialize(using = ObjectToStringDeserializer.class)
         @NotBlank(message = "metadata는 비어있거나 공백일 수 없습니다.")
-        String metadata
+        String metadata,
+        @NotNull(message = "service_type은 null일 수 없습니다.")
+        ServiceType serviceType
 ) {
 
     public TosspaymentsConfirmRequest toTosspaymentsConfirmRequest() {
@@ -28,6 +31,6 @@ public record ConfirmRequest(
     }
 
     public TosspaymentsPayment toTosspaymentsPayment() {
-        return new TosspaymentsPayment(paymentKey, memberId, orderId, orderName, totalAmount, metadata);
+        return new TosspaymentsPayment(paymentKey, memberId, orderId, orderName, totalAmount, metadata, serviceType);
     }
 }

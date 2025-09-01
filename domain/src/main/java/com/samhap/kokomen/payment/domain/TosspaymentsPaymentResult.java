@@ -94,11 +94,23 @@ public class TosspaymentsPaymentResult extends BaseEntity {
     @Column(name = "failure_code")
     private String failureCode;
 
+    @Column(name = "failure_message")
+    private String failureMessage;
+
+    @Column(name = "cancel_reason")
+    private String cancelReason;
+
+    @Column(name = "canceled_at")
+    private LocalDateTime canceledAt;
+
+    @Column(name = "cancel_status")
+    private String cancelStatus;
+
     public TosspaymentsPaymentResult(TosspaymentsPayment tosspaymentsPayment, PaymentType type, String mId, String currency, Long totalAmount, String method,
                                      Long balanceAmount, TosspaymentsStatus tosspaymentsStatus, LocalDateTime requestedAt, LocalDateTime approvedAt,
                                      String lastTransactionKey, Long suppliedAmount, Long vat, Long taxFreeAmount, Long taxExemptionAmount,
                                      boolean isPartialCancelable, String receiptUrl, String easyPayProvider, Long easyPayAmount,
-                                     Long easyPayDiscountAmount, String country, String failureCode) {
+                                     Long easyPayDiscountAmount, String country, String failureCode, String failureMessage) {
         this.tosspaymentsPayment = tosspaymentsPayment;
         this.type = type;
         this.mId = mId;
@@ -121,5 +133,16 @@ public class TosspaymentsPaymentResult extends BaseEntity {
         this.easyPayDiscountAmount = easyPayDiscountAmount;
         this.country = country;
         this.failureCode = failureCode;
+        this.failureMessage = failureMessage;
+    }
+
+    public void updateCancelInfo(String cancelReason, LocalDateTime canceledAt, Long easyPayDiscountAmount, 
+                                 String lastTransactionKey, String cancelStatus, TosspaymentsStatus tosspaymentsStatus) {
+        this.cancelReason = cancelReason;
+        this.canceledAt = canceledAt;
+        this.easyPayDiscountAmount = easyPayDiscountAmount;
+        this.lastTransactionKey = lastTransactionKey;
+        this.cancelStatus = cancelStatus;
+        this.tosspaymentsStatus = tosspaymentsStatus;
     }
 }

@@ -25,6 +25,12 @@ public class TosspaymentsPaymentService {
                 .orElseThrow(() -> new IllegalStateException("해당 id의 결제 정보가 존재하지 않습니다. id: " + id));
     }
 
+    @Transactional(readOnly = true)
+    public TosspaymentsPayment readByPaymentKey(String paymentKey) {
+        return tosspaymentsPaymentRepository.findByPaymentKey(paymentKey)
+                .orElseThrow(() -> new IllegalStateException("해당 paymentKey의 결제 정보가 존재하지 않습니다. paymentKey: " + paymentKey));
+    }
+
     @Transactional
     public void updateState(Long tosspaymentsPaymentId, PaymentState state) {
         TosspaymentsPayment tosspaymentsPayment = readById(tosspaymentsPaymentId);

@@ -48,13 +48,18 @@ public class TosspaymentsPayment extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private PaymentState state;
 
-    public TosspaymentsPayment(String paymentKey, Long memberId, String orderId, String orderName, Long totalAmount, String metadata) {
+    @Column(name = "service_type", nullable = false)
+    @Enumerated(EnumType.STRING)
+    private ServiceType serviceType;
+
+    public TosspaymentsPayment(String paymentKey, Long memberId, String orderId, String orderName, Long totalAmount, String metadata, ServiceType serviceType) {
         this.paymentKey = paymentKey;
         this.memberId = memberId;
         this.orderId = orderId;
         this.orderName = orderName;
         this.totalAmount = totalAmount;
         this.metadata = metadata;
+        this.serviceType = serviceType;
         this.state = PaymentState.NEED_APPROVE;
     }
 

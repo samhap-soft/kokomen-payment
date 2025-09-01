@@ -8,7 +8,7 @@ import com.samhap.kokomen.payment.domain.TosspaymentsPaymentResult;
 import com.samhap.kokomen.payment.domain.TosspaymentsStatus;
 import java.time.LocalDateTime;
 
-public record TosspaymentsConfirmResponse(
+public record TosspaymentsPaymentResponse(
         String paymentKey,
         PaymentType type,
         String orderId,
@@ -35,7 +35,8 @@ public record TosspaymentsConfirmResponse(
         Checkout checkout,
         EasyPay easyPay,
         String country,
-        Failure failure
+        Failure failure,
+        java.util.List<TosspaymentsCancel> cancels
 ) {
 
     public TosspaymentsPaymentResult toTosspaymentsPaymentResult(TosspaymentsPayment tosspaymentsPayment) {
@@ -61,7 +62,8 @@ public record TosspaymentsConfirmResponse(
                 this.easyPay() != null ? this.easyPay().amount() : null,
                 this.easyPay() != null ? this.easyPay().discountAmount() : null,
                 this.country,
-                this.failure() != null ? this.failure().code() : null
+                this.failure() != null ? this.failure().code() : null,
+                this.failure() != null ? this.failure().message() : null
         );
     }
 }
