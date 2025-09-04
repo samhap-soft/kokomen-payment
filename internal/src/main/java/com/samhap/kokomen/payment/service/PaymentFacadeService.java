@@ -10,6 +10,7 @@ import com.samhap.kokomen.payment.external.dto.TosspaymentsPaymentCancelRequest;
 import com.samhap.kokomen.payment.external.dto.TosspaymentsPaymentResponse;
 import com.samhap.kokomen.payment.service.dto.CancelRequest;
 import com.samhap.kokomen.payment.service.dto.ConfirmRequest;
+import com.samhap.kokomen.payment.service.dto.PaymentResponse;
 import java.net.SocketTimeoutException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,10 +26,11 @@ public class PaymentFacadeService {
     private final TosspaymentsPaymentService tosspaymentsPaymentService;
     private final TosspaymentsClient tosspaymentsClient;
 
-    public void confirmPayment(ConfirmRequest request) {
+    public PaymentResponse confirmPayment(ConfirmRequest request) {
         TosspaymentsPayment tosspaymentsPayment = tosspaymentsPaymentService.saveTosspaymentsPayment(request);
         try {
-            confirmPayment(request, tosspaymentsPayment);
+            TosspaymentsPaymentResponse tosspaymentsPaymentResponse = confirmPayment(request, tosspaymentsPayment);
+            return PaymentResponse.from(tosspaymentsPaymentResponse);
         } catch (Exception e) {
             tosspaymentsPaymentService.updateState(tosspaymentsPayment.getId(), PaymentState.NEED_CANCEL);
             throw e;

@@ -3,6 +3,7 @@ package com.samhap.kokomen.payment.controller;
 import com.samhap.kokomen.payment.service.PaymentFacadeService;
 import com.samhap.kokomen.payment.service.dto.CancelRequest;
 import com.samhap.kokomen.payment.service.dto.ConfirmRequest;
+import com.samhap.kokomen.payment.service.dto.PaymentResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,9 +20,9 @@ public class PaymentController {
     private final PaymentFacadeService paymentFacadeService;
 
     @PostMapping("/confirm")
-    public ResponseEntity<Void> confirmPayment(@RequestBody @Valid ConfirmRequest request) {
-        paymentFacadeService.confirmPayment(request);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<PaymentResponse> confirmPayment(@RequestBody @Valid ConfirmRequest request) {
+        PaymentResponse response = paymentFacadeService.confirmPayment(request);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/cancel")
