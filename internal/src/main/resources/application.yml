@@ -9,6 +9,13 @@ spring:
     include:
       - domain
       - common
+      - external
   jackson:
     property-naming-strategy: SNAKE_CASE
     default-property-inclusion: non_null
+---
+# local profile
+spring:
+  config:
+    activate:
+      on-profile: local
