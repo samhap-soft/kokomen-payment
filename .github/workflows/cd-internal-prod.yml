@@ -71,10 +71,6 @@ jobs:
     needs: build-internal
     runs-on: [ self-hosted, prod-payment ]
 
-    strategy:
-      matrix:
-        runner: [ prod-payment-a, prod-payment-b ]
-
     steps:
       - name: Stop existing container
         run: sudo docker rm -f kokomen-payment-internal || true
