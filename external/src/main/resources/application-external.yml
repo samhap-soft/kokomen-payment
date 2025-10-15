@@ -21,3 +21,5 @@ spring:
   config:
     activate:
       on-profile: prod
+tosspayments:
+  widget-secret-key: test_gsk_docs_OaPz8L5KdmQXkzRz3y47BMw6
