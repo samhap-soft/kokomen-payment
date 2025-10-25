@@ -6,6 +6,7 @@ import com.samhap.kokomen.payment.domain.TosspaymentsPayment;
 import com.samhap.kokomen.payment.domain.TosspaymentsPaymentResult;
 import com.samhap.kokomen.payment.external.TosspaymentsClient;
 import com.samhap.kokomen.payment.external.TosspaymentsInternalServerErrorCode;
+import com.samhap.kokomen.payment.external.dto.Failure;
 import com.samhap.kokomen.payment.external.dto.TosspaymentsPaymentCancelRequest;
 import com.samhap.kokomen.payment.external.dto.TosspaymentsPaymentResponse;
 import com.samhap.kokomen.payment.service.dto.CancelRequest;
@@ -13,11 +14,13 @@ import com.samhap.kokomen.payment.service.dto.ConfirmRequest;
 import com.samhap.kokomen.payment.service.dto.PaymentResponse;
 import java.net.SocketTimeoutException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.ResourceAccessException;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class PaymentFacadeService {
@@ -46,16 +49,22 @@ public class PaymentFacadeService {
             tosspaymentsTransactionService.applyTosspaymentsPaymentResult(tosspaymentsPaymentResult, PaymentState.COMPLETED);
             return tosspaymentsConfirmResponse;
         } catch (HttpClientErrorException e) {
-            TosspaymentsPaymentResponse tosspaymentsConfirmResponse = e.getResponseBodyAs(TosspaymentsPaymentResponse.class);
-            String code = tosspaymentsConfirmResponse.failure().code();
-            if (TosspaymentsInternalServerErrorCode.contains(code)) {
-                TosspaymentsPaymentResult tosspaymentsPaymentResult = tosspaymentsConfirmResponse.toTosspaymentsPaymentResult(tosspaymentsPayment);
-                tosspaymentsTransactionService.applyTosspaymentsPaymentResult(tosspaymentsPaymentResult, PaymentState.SERVER_BAD_REQUEST);
-                throw e;
-            }
-
-            tosspaymentsPaymentService.updateState(tosspaymentsPayment.getId(), PaymentState.CLIENT_BAD_REQUEST);
-            throw new BadRequestException(tosspaymentsConfirmResponse.failure().message(), e);
+            // 토스에서 400 에러를 응답하면 TosspaymentsPaymentResponse 스펙이 아니라 {"code": ..., "message": ...} 스펙으로만 응답이 온다.
+            Failure failure = e.getResponseBodyAs(Failure.class);
+            String code = failure.code();
+            log.info("토스 결제 실패(400), code = " + code + ", message = " + failure.message());
+            // TODO: 기존 로직 제대로 돌아가도록 반영
+//            TosspaymentsPaymentResponse tosspaymentsConfirmResponse = e.getResponseBodyAs(TosspaymentsPaymentResponse.class);
+//            String code = tosspaymentsConfirmResponse.failure().code();
+//            if (TosspaymentsInternalServerErrorCode.contains(code)) {
+//                TosspaymentsPaymentResult tosspaymentsPaymentResult = tosspaymentsConfirmResponse.toTosspaymentsPaymentResult(tosspaymentsPayment);
+//                tosspaymentsTransactionService.applyTosspaymentsPaymentResult(tosspaymentsPaymentResult, PaymentState.SERVER_BAD_REQUEST);
+//                throw e;
+//            }
+//
+//            tosspaymentsPaymentService.updateState(tosspaymentsPayment.getId(), PaymentState.CLIENT_BAD_REQUEST);
+//            throw new BadRequestException(tosspaymentsConfirmResponse.failure().message(), e);
+            throw new BadRequestException(failure.message(), e);
         } catch (HttpServerErrorException e) {
             // TODO: retry
             TosspaymentsPaymentResponse tosspaymentsConfirmResponse = e.getResponseBodyAs(TosspaymentsPaymentResponse.class);
