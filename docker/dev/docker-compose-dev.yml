@@ -14,6 +14,7 @@ services:
       JAVA_TOOL_OPTIONS: -Duser.timezone=Asia/Seoul
       HOSTNAME: ${HOSTNAME}
       SPRING_PROFILES_ACTIVE: dev
+      SPRING_DATASOURCE_URL_DEV: ${SPRING_DATASOURCE_URL_DEV}
       SPRING_DATASOURCE_USERNAME_DEV: ${SPRING_DATASOURCE_USERNAME_DEV}
       SPRING_DATASOURCE_PASSWORD_DEV: ${SPRING_DATASOURCE_PASSWORD_DEV}
     networks:
@@ -33,23 +34,9 @@ services:
       JAVA_TOOL_OPTIONS: -Duser.timezone=Asia/Seoul
       HOSTNAME: ${HOSTNAME}
       SPRING_PROFILES_ACTIVE: dev
+      SPRING_DATASOURCE_URL_DEV: ${SPRING_DATASOURCE_URL_DEV}
       SPRING_DATASOURCE_USERNAME_DEV: ${SPRING_DATASOURCE_USERNAME_DEV}
       SPRING_DATASOURCE_PASSWORD_DEV: ${SPRING_DATASOURCE_PASSWORD_DEV}
-    networks:
-      - dev-kokomen-net
-
-  payment-mysql-dev-exporter:
-    image: prom/mysqld-exporter
-    container_name: payment-mysql-dev-exporter
-    restart: unless-stopped
-    command:
-      - '--mysqld.address=${MYSQL_HOST}:3306'
-      - '--mysqld.username=${SPRING_DATASOURCE_USERNAME_DEV}'
-    environment:
-      MYSQLD_EXPORTER_PASSWORD: "${SPRING_DATASOURCE_PASSWORD_DEV}"
-      TZ: Asia/Seoul
-    ports:
-      - "9104:9104"
     networks:
       - dev-kokomen-net
 
