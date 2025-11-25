@@ -99,6 +99,7 @@ jobs:
           MYSQL_ROOT_PASSWORD_DEV: ${{ secrets.MYSQL_ROOT_PASSWORD_DEV }}
           SPRING_DATASOURCE_USERNAME_DEV: ${{ secrets.SPRING_DATASOURCE_USERNAME_DEV }}
           SPRING_DATASOURCE_PASSWORD_DEV: ${{ secrets.SPRING_DATASOURCE_PASSWORD_DEV }}
+          SPRING_DATASOURCE_URL_DEV: ${{ secrets.SPRING_DATASOURCE_URL_DEV }}
         run: |
           export HOSTNAME=$(hostname)
           cd kokomen-payment/docker/dev
