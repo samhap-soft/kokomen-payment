@@ -68,7 +68,7 @@ jobs:
 
   deploy-internal:
     needs: build-internal
-    runs-on: [ self-hosted, dev-payment ]
+    runs-on: [ self-hosted, org, dev, new ]
     steps:
       - name: Stop existing container
         run: sudo docker rm -f kokomen-payment-dev-internal || true
