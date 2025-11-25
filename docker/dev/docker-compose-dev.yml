@@ -38,43 +38,18 @@ services:
     networks:
       - dev-kokomen-net
 
-  kokomen-payment-mysql-dev:
-    image: mysql:8.4.5
-    container_name: kokomen-payment-mysql-dev
-    command:
-      [
-        "mysqld",
-        "--character-set-server=utf8mb4",
-        "--collation-server=utf8mb4_general_ci"
-      ]
-    volumes:
-      - payment-mysql-data:/var/lib/mysql
-      - payment-mysql-init:/docker-entrypoint-initdb.d
-    expose:
-      - 3306
-    restart: always
-    environment:
-      TZ: Asia/Seoul
-      MYSQL_USER: ${SPRING_DATASOURCE_USERNAME_DEV}
-      MYSQL_PASSWORD: ${SPRING_DATASOURCE_PASSWORD_DEV}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD_DEV}
-      MYSQL_DATABASE: kokomen-payment-dev
-      LANG: C.UTF-8
-      MYSQL_INIT_CONNECT: "SET NAMES utf8mb4"
-    networks:
-      - dev-kokomen-net
-
   payment-mysql-dev-exporter:
     image: prom/mysqld-exporter
     container_name: payment-mysql-dev-exporter
     restart: unless-stopped
+    command:
+      - '--mysqld.address=${MYSQL_HOST}:3306'
+      - '--mysqld.username=${SPRING_DATASOURCE_USERNAME_DEV}'
     environment:
-      DATA_SOURCE_NAME: "root:${MYSQL_ROOT_PASSWORD_DEV}@tcp(kokomen-payment-mysql-dev:3306)/"
+      MYSQLD_EXPORTER_PASSWORD: "${SPRING_DATASOURCE_PASSWORD_DEV}"
       TZ: Asia/Seoul
-    expose:
-      - 9104
-    volumes:
-      - ./my.cnf:/.my.cnf
+    ports:
+      - "9104:9104"
     networks:
       - dev-kokomen-net
 
@@ -97,8 +72,6 @@ services:
       - dev-kokomen-net
 
 volumes:
-  payment-mysql-data:
-  payment-mysql-init:
   promtail-payment-tmp:
 
 networks:
