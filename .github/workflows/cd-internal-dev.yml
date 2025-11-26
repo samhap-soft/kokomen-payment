@@ -103,4 +103,4 @@ jobs:
         run: |
           export HOSTNAME=$(hostname)
           cd kokomen-payment/docker/dev
-          sudo -E docker compose -f docker-compose-dev.yml up -d kokomen-payment-dev-internal
+          sudo -E docker compose -f docker-compose-dev.yml up -d
