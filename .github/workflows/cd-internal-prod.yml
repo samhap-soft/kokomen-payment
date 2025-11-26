@@ -68,7 +68,7 @@ jobs:
 
   deploy-internal:
     needs: build-internal
-    runs-on: [ self-hosted, prod-payment ]
+    runs-on: [ self-hosted, prod, new, payment ]
 
     steps:
       - name: Stop existing container

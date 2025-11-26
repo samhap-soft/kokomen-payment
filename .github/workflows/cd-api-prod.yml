@@ -68,7 +68,7 @@ jobs:
 
   deploy-api:
     needs: build-api
-    runs-on: [ self-hosted, prod-payment ]
+    runs-on: [ self-hosted, prod, new, payment ]
     steps:
       - name: Stop existing container
         run: sudo docker rm -f kokomen-payment-api || true
