@@ -96,6 +96,11 @@ jobs:
 
       - name: Docker run
         working-directory: /home/ubuntu
+        env:
+          MYSQL_ROOT_PASSWORD_PROD: ${{ secrets.MYSQL_ROOT_PASSWORD_PROD }}
+          SPRING_DATASOURCE_USERNAME_PROD: ${{ secrets.SPRING_DATASOURCE_USERNAME_PROD }}
+          SPRING_DATASOURCE_PASSWORD_PROD: ${{ secrets.SPRING_DATASOURCE_PASSWORD_PROD }}
+          SPRING_DATASOURCE_URL_PROD: ${{ secrets.SPRING_DATASOURCE_URL_PROD }}
         run: |
           export HOSTNAME=$(hostname)
           cd kokomen-payment/docker/prod
