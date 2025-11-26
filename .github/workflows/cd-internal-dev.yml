@@ -21,7 +21,6 @@ jobs:
 
   build-internal:
     needs: detect-changes
-    if: needs.detect-changes.outputs.internal_changed == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -69,7 +68,7 @@ jobs:
 
   deploy-internal:
     needs: build-internal
-    runs-on: [ self-hosted, dev-payment ]
+    runs-on: [ self-hosted, org, dev, new ]
     steps:
       - name: Stop existing container
         run: sudo docker rm -f kokomen-payment-dev-internal || true
@@ -100,7 +99,8 @@ jobs:
           MYSQL_ROOT_PASSWORD_DEV: ${{ secrets.MYSQL_ROOT_PASSWORD_DEV }}
           SPRING_DATASOURCE_USERNAME_DEV: ${{ secrets.SPRING_DATASOURCE_USERNAME_DEV }}
           SPRING_DATASOURCE_PASSWORD_DEV: ${{ secrets.SPRING_DATASOURCE_PASSWORD_DEV }}
+          SPRING_DATASOURCE_URL_DEV: ${{ secrets.SPRING_DATASOURCE_URL_DEV }}
         run: |
           export HOSTNAME=$(hostname)
           cd kokomen-payment/docker/dev
-          sudo -E docker compose -f docker-compose-dev.yml up -d kokomen-payment-dev-internal kokomen-payment-mysql-dev
+          sudo -E docker compose -f docker-compose-dev.yml up -d kokomen-payment-dev-internal
