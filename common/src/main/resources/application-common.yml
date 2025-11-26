@@ -42,5 +42,5 @@ spring:
       on-profile: prod
   data:
     redis:
-      host: ${REDIS_PRIMARY_HOST_PROD}
+      host: kokomen-redis
       port: 6379

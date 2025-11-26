@@ -83,5 +83,16 @@ services:
       TZ: Asia/Seoul
       HOSTNAME: ${HOSTNAME}
 
+  kokomen-redis:
+    image: valkey/valkey:8.0.1
+    container_name: kokomen-redis
+    ports:
+      - 6379:6379
+    volumes:
+      - kokomen-redis-data:/data
+    environment:
+      TZ: Asia/Seoul
+
 volumes:
   promtail-tmp:
+  kokomen-redis-data:
