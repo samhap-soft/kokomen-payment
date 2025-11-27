@@ -53,20 +53,6 @@ services:
     environment:
       TZ: Asia/Seoul
 
-  node:
-    image: prom/node-exporter
-    container_name: node
-    restart: unless-stopped
-    pid: host
-    ports:
-      - 9100:9100
-    command:
-      - '--path.rootfs=/host'
-    volumes:
-      - '/:/host:ro'
-    environment:
-      TZ: Asia/Seoul
-
   promtail:
     image: grafana/promtail
     container_name: promtail
