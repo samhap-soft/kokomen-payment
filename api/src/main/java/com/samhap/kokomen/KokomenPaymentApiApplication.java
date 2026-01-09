@@ -11,4 +11,5 @@ public class KokomenPaymentApiApplication {
     public static void main(String[] args) {
         SpringApplication.run(KokomenPaymentApiApplication.class, args);
     }
+
 }
