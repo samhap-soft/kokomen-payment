@@ -1,8 +1,8 @@
 #!/bin/bash
 
 if ! docker ps --format '{{.Names}}' | grep -q '^payment-test-mysql$'; then
-  echo "payment-test-mysql 컨테이너가 실행 중이 아닙니다. docker-compose -f test.yml up -d payment-test-mysql로 시작합니다..."
-  docker compose -f test.yml up -d payment-test-mysql
+  echo "payment-test-mysql 컨테이너가 실행 중이 아닙니다. docker compose -f test-docker-compose.yml up -d payment-test-mysql로 시작합니다..."
+  docker compose -f "$(git rev-parse --show-toplevel)/test-docker-compose.yml" up -d payment-test-mysql
 else
   echo "payment-test-mysql 컨테이너가 이미 실행 중입니다."
 fi
