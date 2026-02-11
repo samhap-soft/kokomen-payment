@@ -5,7 +5,6 @@ import com.samhap.kokomen.payment.domain.PaymentState;
 import com.samhap.kokomen.payment.domain.TosspaymentsPayment;
 import com.samhap.kokomen.payment.domain.TosspaymentsPaymentResult;
 import com.samhap.kokomen.payment.external.TosspaymentsClient;
-import com.samhap.kokomen.payment.external.TosspaymentsInternalServerErrorCode;
 import com.samhap.kokomen.payment.external.dto.Failure;
 import com.samhap.kokomen.payment.external.dto.TosspaymentsPaymentCancelRequest;
 import com.samhap.kokomen.payment.external.dto.TosspaymentsPaymentResponse;

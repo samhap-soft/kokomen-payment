@@ -10,6 +10,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
+import com.samhap.kokomen.global.exception.InternalServerErrorException;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -69,16 +70,16 @@ public class TosspaymentsPayment extends BaseEntity {
 
     public void validateTosspaymentsResult(String paymentKey, String orderId, Long totalAmount, String metadata) {
         if (!this.paymentKey.equals(paymentKey)) {
-            throw new IllegalStateException("토스 페이먼츠 응답(%s)의 paymentKey가 DB에 저장된 값(%s)과 다릅니다.".formatted(paymentKey, this.paymentKey));
+            throw new InternalServerErrorException("토스 페이먼츠 응답(%s)의 paymentKey가 DB에 저장된 값(%s)과 다릅니다.".formatted(paymentKey, this.paymentKey));
         }
         if (!this.orderId.equals(orderId)) {
-            throw new IllegalStateException("토스 페이먼츠 응답(%s)의 orderId가 DB에 저장된 값(%s)과 다릅니다.".formatted(orderId, this.orderId));
+            throw new InternalServerErrorException("토스 페이먼츠 응답(%s)의 orderId가 DB에 저장된 값(%s)과 다릅니다.".formatted(orderId, this.orderId));
         }
         if (!this.totalAmount.equals(totalAmount)) {
-            throw new IllegalStateException("토스 페이먼츠 응답(%d)의 totalAmount가 DB에 저장된 값(%d)과 다릅니다.".formatted(totalAmount, this.totalAmount));
+            throw new InternalServerErrorException("토스 페이먼츠 응답(%d)의 totalAmount가 DB에 저장된 값(%d)과 다릅니다.".formatted(totalAmount, this.totalAmount));
         }
 //        if (!this.metadata.equals(metadata)) {
-//            throw new IllegalStateException("토스 페이먼츠 응답(%s)의 metadata가 DB에 저장된 값(%s)과 다릅니다.".formatted(metadata, this.metadata));
+//            throw new InternalServerErrorException("토스 페이먼츠 응답(%s)의 metadata가 DB에 저장된 값(%s)과 다릅니다.".formatted(metadata, this.metadata));
 //        }
     }
 }
