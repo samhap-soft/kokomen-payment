@@ -14,7 +14,7 @@ spring:
     activate:
       on-profile: dev
 tosspayments:
-  widget-secret-key: test_gsk_docs_OaPz8L5KdmQXkzRz3y47BMw6
+  widget-secret-key: ${WIDGET_SECRET_KEY_DEV}
 ---
 # prod profile
 spring:
