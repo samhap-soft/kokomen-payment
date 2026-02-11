@@ -101,6 +101,7 @@ jobs:
           SPRING_DATASOURCE_USERNAME_PROD: ${{ secrets.SPRING_DATASOURCE_USERNAME_PROD }}
           SPRING_DATASOURCE_PASSWORD_PROD: ${{ secrets.SPRING_DATASOURCE_PASSWORD_PROD }}
           SPRING_DATASOURCE_URL_PROD: ${{ secrets.SPRING_DATASOURCE_URL_PROD }}
+          WIDGET_SECRET_KEY_PROD: ${{ secrets.WIDGET_SECRET_KEY_PROD }}
         run: |
           export HOSTNAME=$(hostname)
           cd kokomen-payment/docker/prod
