@@ -23,7 +23,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
-        String defaultErrorMessageForUser = "잘못된 요청입니다.";
+        String defaultErrorMessageForUser = PaymentServiceErrorMessage.INVALID_REQUEST.getMessage();
         String message = e.getBindingResult()
                 .getFieldErrors()
                 .stream()
@@ -45,13 +45,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
         log.warn("HttpMessageNotReadableException :: message: {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ErrorResponse("잘못된 요청 형식입니다."));
+                .body(new ErrorResponse(PaymentServiceErrorMessage.INVALID_REQUEST_FORMAT.getMessage()));
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleException(Exception e) {
         log.error("Exception :: status: {}, message: {}, stackTrace: ", HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), e);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ErrorResponse("서버에 문제가 발생하였습니다."));
+                .body(new ErrorResponse(PaymentServiceErrorMessage.INTERNAL_SERVER_ERROR.getMessage()));
     }
 }

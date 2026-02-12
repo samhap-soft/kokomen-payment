@@ -28,7 +28,8 @@ class TosspaymentsPaymentTest {
         );
 
         assertThatThrownBy(() -> payment.validateTosspaymentsResult("wrong_key", "order_id", 10000L))
-                .isInstanceOf(InternalServerErrorException.class);
+                .isInstanceOf(InternalServerErrorException.class)
+                .hasMessage(PaymentErrorMessage.PAYMENT_KEY_MISMATCH.getMessage());
     }
 
     @Test
@@ -38,7 +39,8 @@ class TosspaymentsPaymentTest {
         );
 
         assertThatThrownBy(() -> payment.validateTosspaymentsResult("payment_key", "wrong_order", 10000L))
-                .isInstanceOf(InternalServerErrorException.class);
+                .isInstanceOf(InternalServerErrorException.class)
+                .hasMessage(PaymentErrorMessage.ORDER_ID_MISMATCH.getMessage());
     }
 
     @Test
@@ -48,7 +50,8 @@ class TosspaymentsPaymentTest {
         );
 
         assertThatThrownBy(() -> payment.validateTosspaymentsResult("payment_key", "order_id", 99999L))
-                .isInstanceOf(InternalServerErrorException.class);
+                .isInstanceOf(InternalServerErrorException.class)
+                .hasMessage(PaymentErrorMessage.TOTAL_AMOUNT_MISMATCH.getMessage());
     }
 
     @Test

@@ -1,6 +1,7 @@
 package com.samhap.kokomen.payment.domain;
 
 import com.samhap.kokomen.global.domain.BaseEntity;
+import com.samhap.kokomen.global.exception.InternalServerErrorException;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -10,11 +11,12 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
-import com.samhap.kokomen.global.exception.InternalServerErrorException;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Entity
@@ -53,7 +55,8 @@ public class TosspaymentsPayment extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private ServiceType serviceType;
 
-    public TosspaymentsPayment(String paymentKey, Long memberId, String orderId, String orderName, Long totalAmount, String metadata, ServiceType serviceType) {
+    public TosspaymentsPayment(String paymentKey, Long memberId, String orderId, String orderName, Long totalAmount,
+                               String metadata, ServiceType serviceType) {
         this.paymentKey = paymentKey;
         this.memberId = memberId;
         this.orderId = orderId;
@@ -70,13 +73,16 @@ public class TosspaymentsPayment extends BaseEntity {
 
     public void validateTosspaymentsResult(String paymentKey, String orderId, Long totalAmount) {
         if (!this.paymentKey.equals(paymentKey)) {
-            throw new InternalServerErrorException("토스 페이먼츠 응답(%s)의 paymentKey가 DB에 저장된 값(%s)과 다릅니다.".formatted(paymentKey, this.paymentKey));
+            log.error("paymentKey 불일치 - 응답: {}, DB: {}", paymentKey, this.paymentKey);
+            throw new InternalServerErrorException(PaymentErrorMessage.PAYMENT_KEY_MISMATCH.getMessage());
         }
         if (!this.orderId.equals(orderId)) {
-            throw new InternalServerErrorException("토스 페이먼츠 응답(%s)의 orderId가 DB에 저장된 값(%s)과 다릅니다.".formatted(orderId, this.orderId));
+            log.error("orderId 불일치 - 응답: {}, DB: {}", orderId, this.orderId);
+            throw new InternalServerErrorException(PaymentErrorMessage.ORDER_ID_MISMATCH.getMessage());
         }
         if (!this.totalAmount.equals(totalAmount)) {
-            throw new InternalServerErrorException("토스 페이먼츠 응답(%d)의 totalAmount가 DB에 저장된 값(%d)과 다릅니다.".formatted(totalAmount, this.totalAmount));
+            log.error("totalAmount 불일치 - 응답: {}, DB: {}", totalAmount, this.totalAmount);
+            throw new InternalServerErrorException(PaymentErrorMessage.TOTAL_AMOUNT_MISMATCH.getMessage());
         }
     }
 }

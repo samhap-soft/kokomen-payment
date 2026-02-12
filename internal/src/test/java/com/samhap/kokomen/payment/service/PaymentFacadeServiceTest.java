@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 import com.samhap.kokomen.global.BaseTest;
 import com.samhap.kokomen.global.exception.BadRequestException;
 import com.samhap.kokomen.global.exception.InternalServerErrorException;
+import com.samhap.kokomen.global.exception.PaymentServiceErrorMessage;
 import com.samhap.kokomen.global.fixture.TosspaymentsPaymentFixtureBuilder;
 import com.samhap.kokomen.global.fixture.TosspaymentsPaymentResultFixtureBuilder;
 import com.samhap.kokomen.payment.domain.PaymentState;
@@ -73,7 +74,8 @@ class PaymentFacadeServiceTest extends BaseTest {
         when(tosspaymentsClient.confirmPayment(any())).thenThrow(clientError);
 
         assertThatThrownBy(() -> paymentFacadeService.confirmPayment(request))
-                .isInstanceOf(InternalServerErrorException.class);
+                .isInstanceOf(InternalServerErrorException.class)
+                .hasMessage(PaymentServiceErrorMessage.CONFIRM_SERVER_ERROR.getMessage());
 
         TosspaymentsPayment payment = tosspaymentsPaymentRepository.findByPaymentKey("payment_key").orElseThrow();
         assertThat(payment.getState()).isEqualTo(PaymentState.SERVER_BAD_REQUEST);
@@ -220,7 +222,8 @@ class PaymentFacadeServiceTest extends BaseTest {
                 .thenThrow(new HttpServerErrorException(HttpStatus.INTERNAL_SERVER_ERROR));
 
         assertThatThrownBy(() -> paymentFacadeService.cancelPayment(new CancelRequest("payment_key", "단순 변심")))
-                .isInstanceOf(InternalServerErrorException.class);
+                .isInstanceOf(InternalServerErrorException.class)
+                .hasMessage(PaymentServiceErrorMessage.CANCEL_SERVER_ERROR.getMessage());
     }
 
     @Test
@@ -229,7 +232,8 @@ class PaymentFacadeServiceTest extends BaseTest {
                 .thenThrow(new ResourceAccessException("네트워크 오류"));
 
         assertThatThrownBy(() -> paymentFacadeService.cancelPayment(new CancelRequest("payment_key", "단순 변심")))
-                .isInstanceOf(InternalServerErrorException.class);
+                .isInstanceOf(InternalServerErrorException.class)
+                .hasMessage(PaymentServiceErrorMessage.CANCEL_NETWORK_ERROR.getMessage());
     }
 
     private ConfirmRequest createConfirmRequest() {

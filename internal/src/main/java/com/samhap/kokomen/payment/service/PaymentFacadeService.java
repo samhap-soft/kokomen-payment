@@ -3,6 +3,7 @@ package com.samhap.kokomen.payment.service;
 import com.samhap.kokomen.global.exception.BadRequestException;
 import com.samhap.kokomen.global.exception.InternalServerErrorException;
 import com.samhap.kokomen.global.exception.KokomenException;
+import com.samhap.kokomen.global.exception.PaymentServiceErrorMessage;
 import com.samhap.kokomen.payment.domain.PaymentState;
 import com.samhap.kokomen.payment.domain.TosspaymentsPayment;
 import com.samhap.kokomen.payment.domain.TosspaymentsPaymentResult;
@@ -72,7 +73,7 @@ public class PaymentFacadeService {
         if (TosspaymentsInternalServerErrorCode.contains(code)) {
             log.error("토스 결제 실패(서버 원인 400), code = {}, message = {}", code, failure.message());
             tosspaymentsPaymentService.updateState(tosspaymentsPayment.getId(), PaymentState.SERVER_BAD_REQUEST);
-            return new InternalServerErrorException("결제 처리 중 서버 오류가 발생했습니다.", e);
+            return new InternalServerErrorException(PaymentServiceErrorMessage.CONFIRM_SERVER_ERROR.getMessage(), e);
         }
 
         log.info("토스 결제 실패(클라이언트 원인 400), code = {}, message = {}", code, failure.message());
@@ -117,10 +118,10 @@ public class PaymentFacadeService {
             throw new BadRequestException(failure.message(), e);
         } catch (HttpServerErrorException e) {
             log.error("결제 취소 실패(5xx) - paymentKey: {}, status: {}", request.paymentKey(), e.getStatusCode());
-            throw new InternalServerErrorException("결제 취소 처리 중 서버 오류가 발생했습니다.", e);
+            throw new InternalServerErrorException(PaymentServiceErrorMessage.CANCEL_SERVER_ERROR.getMessage(), e);
         } catch (ResourceAccessException e) {
             log.error("결제 취소 네트워크 오류 - paymentKey: {}", request.paymentKey(), e);
-            throw new InternalServerErrorException("결제 취소 처리 중 네트워크 오류가 발생했습니다.", e);
+            throw new InternalServerErrorException(PaymentServiceErrorMessage.CANCEL_NETWORK_ERROR.getMessage(), e);
         }
     }
 }

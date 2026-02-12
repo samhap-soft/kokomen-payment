@@ -3,6 +3,7 @@ package com.samhap.kokomen.global.exception;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.samhap.kokomen.global.dto.ErrorResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -25,12 +26,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
-        String defaultErrorMessageForUser = "잘못된 요청입니다.";
+        String defaultErrorMessageForUser = ApiErrorMessage.INVALID_REQUEST.getMessage();
         String message = e.getBindingResult()
                 .getFieldErrors()
                 .stream()
                 .findFirst()
-                .map(error -> error.getDefaultMessage())
+                .map(DefaultMessageSourceResolvable::getDefaultMessage)
                 .orElse(defaultErrorMessageForUser);
 
         if (message.equals(defaultErrorMessageForUser)) {
@@ -44,35 +45,33 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MissingServletRequestParameterException.class)
-    public ResponseEntity<ErrorResponse> handleMissingServletRequestParameterException(MissingServletRequestParameterException e) {
-        String message = "필수 요청 파라미터 '" + e.getParameterName() + "'가 누락되었습니다.";
-        log.warn("MissingServletRequestParameterException :: message: {}", message);
+    public ResponseEntity<ErrorResponse> handleMissingServletRequestParameterException(
+            MissingServletRequestParameterException e) {
+        log.warn("MissingServletRequestParameterException :: parameterName: {}", e.getParameterName());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ErrorResponse(message));
+                .body(new ErrorResponse(ApiErrorMessage.MISSING_REQUEST_PARAMETER.getMessage()));
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponse> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
-        String message = "잘못된 요청 형식입니다. JSON 형식을 확인해주세요.";
         if (e.getCause() instanceof InvalidFormatException invalidFormatException) {
             String fieldName = invalidFormatException.getPath().get(0).getFieldName();
             String invalidValue = String.valueOf(invalidFormatException.getValue());
-            message = String.format(
-                    "JSON 파싱 오류: '%s' 필드에 유효하지 않은 값이 전달되었습니다. (전달된 값: '%s')",
-                    fieldName,
-                    invalidValue
-            );
+            log.warn("HttpMessageNotReadableException :: fieldName: {}, invalidValue: {}", fieldName, invalidValue);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ErrorResponse(ApiErrorMessage.JSON_PARSE_ERROR.getMessage()));
         }
 
-        log.warn("HttpMessageNotReadableException :: message: {}", message);
+        log.warn("HttpMessageNotReadableException :: message: {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(new ErrorResponse(message));
+                .body(new ErrorResponse(ApiErrorMessage.INVALID_REQUEST_FORMAT.getMessage()));
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleException(Exception e) {
-        log.error("Exception :: status: {}, message: {}, stackTrace: ", HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), e);
+        log.error("Exception :: status: {}, message: {}, stackTrace: ", HttpStatus.INTERNAL_SERVER_ERROR,
+                e.getMessage(), e);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(new ErrorResponse("서버에 문제가 발생하였습니다."));
+                .body(new ErrorResponse(ApiErrorMessage.INTERNAL_SERVER_ERROR.getMessage()));
     }
 }

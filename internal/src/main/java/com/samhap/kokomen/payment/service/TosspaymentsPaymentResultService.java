@@ -1,12 +1,15 @@
 package com.samhap.kokomen.payment.service;
 
 import com.samhap.kokomen.global.exception.NotFoundException;
+import com.samhap.kokomen.global.exception.PaymentServiceErrorMessage;
 import com.samhap.kokomen.payment.domain.TosspaymentsPaymentResult;
 import com.samhap.kokomen.payment.repository.TosspaymentsPaymentResultRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class TosspaymentsPaymentResultService {
@@ -21,6 +24,9 @@ public class TosspaymentsPaymentResultService {
     @Transactional(readOnly = true)
     public TosspaymentsPaymentResult readByTosspaymentsPaymentId(Long tosspaymentsPaymentId) {
         return tosspaymentsPaymentResultRepository.findByTosspaymentsPaymentId(tosspaymentsPaymentId)
-                .orElseThrow(() -> new NotFoundException("해당 결제의 결과 정보가 존재하지 않습니다. tosspaymentsPaymentId: " + tosspaymentsPaymentId));
+                .orElseThrow(() -> {
+                    log.error("결제 결과 조회 실패 - tosspaymentsPaymentId: {}", tosspaymentsPaymentId);
+                    return new NotFoundException(PaymentServiceErrorMessage.PAYMENT_RESULT_NOT_FOUND.getMessage());
+                });
     }
 }
