@@ -5,22 +5,7 @@ on:
     branches: [ develop ]
 
 jobs:
-  detect-changes:
-    runs-on: ubuntu-latest
-    outputs:
-      api_changed: ${{ steps.filter.outputs.api }}
-    steps:
-      - uses: actions/checkout@v4
-      - id: filter
-        uses: dorny/paths-filter@v3
-        with:
-          base: develop
-          filters: |
-            api:
-              - 'api/**'
-
   build-api:
-    needs: detect-changes
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
