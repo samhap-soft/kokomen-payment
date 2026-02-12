@@ -25,7 +25,6 @@ class PaymentControllerTest extends BaseControllerTest {
 
     @Test
     void 결제를_승인한다() throws Exception {
-        // given
         PaymentResponse mockResponse = new PaymentResponse(
                 "test_payment_key_001",
                 PaymentType.NORMAL,
@@ -71,7 +70,6 @@ class PaymentControllerTest extends BaseControllerTest {
                 }
                 """;
 
-        // when & then
         mockMvc.perform(post("/internal/v1/payments/confirm")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestJson))
@@ -80,7 +78,6 @@ class PaymentControllerTest extends BaseControllerTest {
 
     @Test
     void 결제를_취소한다() throws Exception {
-        // given
         doNothing().when(paymentFacadeService).cancelPayment(any(CancelRequest.class));
 
         String requestJson = """
@@ -90,7 +87,6 @@ class PaymentControllerTest extends BaseControllerTest {
                 }
                 """;
 
-        // when & then
         mockMvc.perform(post("/internal/v1/payments/cancel")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestJson))
