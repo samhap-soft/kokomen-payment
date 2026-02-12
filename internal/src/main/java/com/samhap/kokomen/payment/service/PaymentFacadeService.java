@@ -1,6 +1,9 @@
 package com.samhap.kokomen.payment.service;
 
 import com.samhap.kokomen.global.exception.BadRequestException;
+import com.samhap.kokomen.global.exception.InternalServerErrorException;
+import com.samhap.kokomen.global.exception.KokomenException;
+import com.samhap.kokomen.global.exception.PaymentServiceErrorMessage;
 import com.samhap.kokomen.payment.domain.PaymentState;
 import com.samhap.kokomen.payment.domain.TosspaymentsPayment;
 import com.samhap.kokomen.payment.domain.TosspaymentsPaymentResult;
@@ -34,7 +37,11 @@ public class PaymentFacadeService {
         try {
             TosspaymentsPaymentResponse tosspaymentsPaymentResponse = confirmPayment(request, tosspaymentsPayment);
             return PaymentResponse.from(tosspaymentsPaymentResponse);
-        } catch (Exception e) {
+        } catch (KokomenException | HttpServerErrorException | ResourceAccessException e) {
+            // inner에서 상태 처리 완료
+            throw e;
+        }  catch (Exception e) {
+            // 예상치 못한 예외만 NEED_CANCEL 설정
             tosspaymentsPaymentService.updateState(tosspaymentsPayment.getId(), PaymentState.NEED_CANCEL);
             throw e;
         }
@@ -44,55 +51,91 @@ public class PaymentFacadeService {
         try {
             TosspaymentsPaymentResponse tosspaymentsConfirmResponse = tosspaymentsClient.confirmPayment(request.toTosspaymentsConfirmRequest());
             tosspaymentsPayment.validateTosspaymentsResult(tosspaymentsConfirmResponse.paymentKey(), tosspaymentsConfirmResponse.orderId(),
-                    tosspaymentsConfirmResponse.totalAmount(), tosspaymentsConfirmResponse.metadata());
+                    tosspaymentsConfirmResponse.totalAmount());
             TosspaymentsPaymentResult tosspaymentsPaymentResult = tosspaymentsConfirmResponse.toTosspaymentsPaymentResult(tosspaymentsPayment);
             tosspaymentsTransactionService.applyTosspaymentsPaymentResult(tosspaymentsPaymentResult, PaymentState.COMPLETED);
             return tosspaymentsConfirmResponse;
         } catch (HttpClientErrorException e) {
-            // 토스에서 400 에러를 응답하면 TosspaymentsPaymentResponse 스펙이 아니라 {"code": ..., "message": ...} 스펙으로만 응답이 온다.
-            Failure failure = e.getResponseBodyAs(Failure.class);
-            String code = failure.code();
-            log.info("토스 결제 실패(400), code = " + code + ", message = " + failure.message());
-            // TODO: 기존 로직 제대로 돌아가도록 반영
-//            TosspaymentsPaymentResponse tosspaymentsConfirmResponse = e.getResponseBodyAs(TosspaymentsPaymentResponse.class);
-//            String code = tosspaymentsConfirmResponse.failure().code();
-//            if (TosspaymentsInternalServerErrorCode.contains(code)) {
-//                TosspaymentsPaymentResult tosspaymentsPaymentResult = tosspaymentsConfirmResponse.toTosspaymentsPaymentResult(tosspaymentsPayment);
-//                tosspaymentsTransactionService.applyTosspaymentsPaymentResult(tosspaymentsPaymentResult, PaymentState.SERVER_BAD_REQUEST);
-//                throw e;
-//            }
-//
-//            tosspaymentsPaymentService.updateState(tosspaymentsPayment.getId(), PaymentState.CLIENT_BAD_REQUEST);
-//            throw new BadRequestException(tosspaymentsConfirmResponse.failure().message(), e);
-            throw new BadRequestException(failure.message(), e);
+            throw handleConfirmClientError(e, tosspaymentsPayment);
         } catch (HttpServerErrorException e) {
-            // TODO: retry
-            TosspaymentsPaymentResponse tosspaymentsConfirmResponse = e.getResponseBodyAs(TosspaymentsPaymentResponse.class);
-            TosspaymentsPaymentResult tosspaymentsPaymentResult = tosspaymentsConfirmResponse.toTosspaymentsPaymentResult(tosspaymentsPayment);
-            tosspaymentsTransactionService.applyTosspaymentsPaymentResult(tosspaymentsPaymentResult, PaymentState.NEED_CANCEL);
+            handleConfirmServerError(e, tosspaymentsPayment);
             throw e;
         } catch (ResourceAccessException e) {
-            if (e.getRootCause() instanceof SocketTimeoutException) {
-                SocketTimeoutException socketTimeoutException = (SocketTimeoutException) e.getRootCause();
-                if (socketTimeoutException.getMessage().contains("Connect timed out")) {
-                    // TODO: retry
-                    tosspaymentsPaymentService.updateState(tosspaymentsPayment.getId(), PaymentState.CONNECTION_TIMEOUT);
-                    throw e;
-                }
-                if (socketTimeoutException.getMessage().contains("Read timed out")) {
-                    // TODO: retry
-                    tosspaymentsPaymentService.updateState(tosspaymentsPayment.getId(), PaymentState.NEED_CANCEL);
-                    throw e;
-                }
-            }
-
+            handleConfirmNetworkError(e, tosspaymentsPayment);
             throw e;
         }
     }
 
+    private RuntimeException handleConfirmClientError(HttpClientErrorException e, TosspaymentsPayment tosspaymentsPayment) {
+        Failure failure = e.getResponseBodyAs(Failure.class);
+        if (failure == null) {
+            log.error("토스 결제 실패(400) - 응답 파싱 실패", e);
+            tosspaymentsPaymentService.updateState(tosspaymentsPayment.getId(), PaymentState.SERVER_BAD_REQUEST);
+            return new InternalServerErrorException(PaymentServiceErrorMessage.CONFIRM_SERVER_ERROR.getMessage(), e);
+        }
+        String code = failure.code();
+
+        if (TosspaymentsInternalServerErrorCode.contains(code)) {
+            log.error("토스 결제 실패(서버 원인 400), code = {}, message = {}", code, failure.message());
+            tosspaymentsPaymentService.updateState(tosspaymentsPayment.getId(), PaymentState.SERVER_BAD_REQUEST);
+            return new InternalServerErrorException(PaymentServiceErrorMessage.CONFIRM_SERVER_ERROR.getMessage(), e);
+        }
+
+        log.info("토스 결제 실패(클라이언트 원인 400), code = {}, message = {}", code, failure.message());
+        tosspaymentsPaymentService.updateState(tosspaymentsPayment.getId(), PaymentState.CLIENT_BAD_REQUEST);
+        return new BadRequestException(failure.message(), e);
+    }
+
+    private void handleConfirmServerError(HttpServerErrorException e, TosspaymentsPayment tosspaymentsPayment) {
+        // TODO: retry
+        try {
+            TosspaymentsPaymentResponse tosspaymentsConfirmResponse = e.getResponseBodyAs(TosspaymentsPaymentResponse.class);
+            TosspaymentsPaymentResult tosspaymentsPaymentResult = tosspaymentsConfirmResponse.toTosspaymentsPaymentResult(tosspaymentsPayment);
+            tosspaymentsTransactionService.applyTosspaymentsPaymentResult(tosspaymentsPaymentResult, PaymentState.NEED_CANCEL);
+        } catch (Exception parseException) {
+            log.warn("토스 5xx 응답 파싱 실패, 상태만 업데이트합니다. paymentId = {}", tosspaymentsPayment.getId(), parseException);
+            tosspaymentsPaymentService.updateState(tosspaymentsPayment.getId(), PaymentState.NEED_CANCEL);
+        }
+    }
+
+    private void handleConfirmNetworkError(ResourceAccessException e, TosspaymentsPayment tosspaymentsPayment) {
+        if (e.getRootCause() instanceof SocketTimeoutException socketTimeoutException) {
+            if (socketTimeoutException.getMessage().contains("Connect timed out")) {
+                // TODO: retry
+                tosspaymentsPaymentService.updateState(tosspaymentsPayment.getId(), PaymentState.CONNECTION_TIMEOUT);
+                return;
+            }
+            if (socketTimeoutException.getMessage().contains("Read timed out")) {
+                // TODO: retry
+                tosspaymentsPaymentService.updateState(tosspaymentsPayment.getId(), PaymentState.NEED_CANCEL);
+                return;
+            }
+        }
+        tosspaymentsPaymentService.updateState(tosspaymentsPayment.getId(), PaymentState.NEED_CANCEL);
+    }
+
     public void cancelPayment(CancelRequest request) {
         TosspaymentsPaymentCancelRequest tosspaymentsPaymentCancelRequest = new TosspaymentsPaymentCancelRequest(request.cancelReason());
-        TosspaymentsPaymentResponse response = tosspaymentsClient.cancelPayment(request.paymentKey(), tosspaymentsPaymentCancelRequest);
-        tosspaymentsTransactionService.applyCancelResult(response);
+        try {
+            TosspaymentsPaymentResponse response = tosspaymentsClient.cancelPayment(request.paymentKey(), tosspaymentsPaymentCancelRequest);
+            tosspaymentsTransactionService.applyCancelResult(response);
+        } catch (HttpClientErrorException e) {
+            Failure failure = e.getResponseBodyAs(Failure.class);
+            if (failure == null) {
+                log.error("결제 취소 실패(400) - 응답 파싱 실패, paymentKey: {}", request.paymentKey(), e);
+                throw new InternalServerErrorException(PaymentServiceErrorMessage.CANCEL_SERVER_ERROR.getMessage(), e);
+            }
+            log.error("결제 취소 실패(400) - paymentKey: {}, code: {}, message: {}", request.paymentKey(), failure.code(), failure.message());
+            throw new BadRequestException(failure.message(), e);
+        } catch (HttpServerErrorException e) {
+            log.error("결제 취소 실패(5xx) - paymentKey: {}, status: {}", request.paymentKey(), e.getStatusCode());
+            throw new InternalServerErrorException(PaymentServiceErrorMessage.CANCEL_SERVER_ERROR.getMessage(), e);
+        } catch (ResourceAccessException e) {
+            log.error("결제 취소 네트워크 오류 - paymentKey: {}", request.paymentKey(), e);
+            throw new InternalServerErrorException(PaymentServiceErrorMessage.CANCEL_NETWORK_ERROR.getMessage(), e);
+        } catch (Exception e) {
+            log.error("결제 취소 중 예상치 못한 오류 - paymentKey: {}", request.paymentKey(), e);
+            throw new InternalServerErrorException(PaymentServiceErrorMessage.CANCEL_SERVER_ERROR.getMessage(), e);
+        }
     }
 }

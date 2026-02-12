@@ -36,7 +36,7 @@ public class TossPaymentsClientBuilder {
                 .defaultHeader("Authorization", "Basic " + encodedSecretKey)
                 .defaultHeader("Content-Type", "application/json")
                 .messageConverters(converters -> {
-                    converters.removeIf(converter -> converter instanceof MappingJackson2HttpMessageConverter);
+                    converters.removeIf(MappingJackson2HttpMessageConverter.class::isInstance);
                     converters.add(new MappingJackson2HttpMessageConverter(createObjectMapper()));
                 });
     }

@@ -5,22 +5,7 @@ on:
     branches: [ main ]
 
 jobs:
-  detect-changes:
-    runs-on: ubuntu-latest
-    outputs:
-      internal_changed: ${{ steps.filter.outputs.internal }}
-    steps:
-      - uses: actions/checkout@v4
-      - id: filter
-        uses: dorny/paths-filter@v3
-        with:
-          base: main
-          filters: |
-            internal:
-              - 'internal/**'
-
   build-internal:
-    needs: detect-changes
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -101,6 +86,7 @@ jobs:
           SPRING_DATASOURCE_USERNAME_PROD: ${{ secrets.SPRING_DATASOURCE_USERNAME_PROD }}
           SPRING_DATASOURCE_PASSWORD_PROD: ${{ secrets.SPRING_DATASOURCE_PASSWORD_PROD }}
           SPRING_DATASOURCE_URL_PROD: ${{ secrets.SPRING_DATASOURCE_URL_PROD }}
+          WIDGET_SECRET_KEY_PROD: ${{ secrets.WIDGET_SECRET_KEY_PROD }}
         run: |
           export HOSTNAME=$(hostname)
           cd kokomen-payment/docker/prod
