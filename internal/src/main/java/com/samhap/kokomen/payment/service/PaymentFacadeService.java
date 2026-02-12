@@ -16,8 +16,10 @@ import com.samhap.kokomen.payment.service.dto.CancelRequest;
 import com.samhap.kokomen.payment.service.dto.ConfirmRequest;
 import com.samhap.kokomen.payment.service.dto.PaymentResponse;
 import java.net.SocketTimeoutException;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.retry.support.RetryTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
@@ -31,6 +33,7 @@ public class PaymentFacadeService {
     private final TosspaymentsTransactionService tosspaymentsTransactionService;
     private final TosspaymentsPaymentService tosspaymentsPaymentService;
     private final TosspaymentsClient tosspaymentsClient;
+    private final RetryTemplate tosspaymentsConfirmRetryTemplate;
 
     public PaymentResponse confirmPayment(ConfirmRequest request) {
         TosspaymentsPayment tosspaymentsPayment = tosspaymentsPaymentService.saveTosspaymentsPayment(request);
@@ -48,8 +51,15 @@ public class PaymentFacadeService {
     }
 
     private TosspaymentsPaymentResponse confirmPayment(ConfirmRequest request, TosspaymentsPayment tosspaymentsPayment) {
+        String idempotencyKey = UUID.randomUUID().toString();
         try {
-            TosspaymentsPaymentResponse tosspaymentsConfirmResponse = tosspaymentsClient.confirmPayment(request.toTosspaymentsConfirmRequest());
+            TosspaymentsPaymentResponse tosspaymentsConfirmResponse = tosspaymentsConfirmRetryTemplate.execute(context -> {
+                if (context.getRetryCount() > 0) {
+                    log.warn("토스페이먼츠 결제 승인 재시도 {}/2회, paymentKey = {}",
+                            context.getRetryCount(), request.paymentKey());
+                }
+                return tosspaymentsClient.confirmPayment(request.toTosspaymentsConfirmRequest(), idempotencyKey);
+            });
             tosspaymentsPayment.validateTosspaymentsResult(tosspaymentsConfirmResponse.paymentKey(), tosspaymentsConfirmResponse.orderId(),
                     tosspaymentsConfirmResponse.totalAmount());
             TosspaymentsPaymentResult tosspaymentsPaymentResult = tosspaymentsConfirmResponse.toTosspaymentsPaymentResult(tosspaymentsPayment);
@@ -75,6 +85,12 @@ public class PaymentFacadeService {
         }
         String code = failure.code();
 
+        if ("IDEMPOTENT_REQUEST_PROCESSING".equals(code)) {
+            log.error("토스 결제 처리 중 상태 지속 (409), paymentKey = {}", tosspaymentsPayment.getPaymentKey());
+            tosspaymentsPaymentService.updateState(tosspaymentsPayment.getId(), PaymentState.NEED_CANCEL);
+            return new InternalServerErrorException(PaymentServiceErrorMessage.CONFIRM_SERVER_ERROR.getMessage(), e);
+        }
+
         if (TosspaymentsInternalServerErrorCode.contains(code)) {
             log.error("토스 결제 실패(서버 원인 400), code = {}, message = {}", code, failure.message());
             tosspaymentsPaymentService.updateState(tosspaymentsPayment.getId(), PaymentState.SERVER_BAD_REQUEST);
@@ -87,7 +103,6 @@ public class PaymentFacadeService {
     }
 
     private void handleConfirmServerError(HttpServerErrorException e, TosspaymentsPayment tosspaymentsPayment) {
-        // TODO: retry
         try {
             TosspaymentsPaymentResponse tosspaymentsConfirmResponse = e.getResponseBodyAs(TosspaymentsPaymentResponse.class);
             TosspaymentsPaymentResult tosspaymentsPaymentResult = tosspaymentsConfirmResponse.toTosspaymentsPaymentResult(tosspaymentsPayment);
@@ -101,12 +116,10 @@ public class PaymentFacadeService {
     private void handleConfirmNetworkError(ResourceAccessException e, TosspaymentsPayment tosspaymentsPayment) {
         if (e.getRootCause() instanceof SocketTimeoutException socketTimeoutException) {
             if (socketTimeoutException.getMessage().contains("Connect timed out")) {
-                // TODO: retry
                 tosspaymentsPaymentService.updateState(tosspaymentsPayment.getId(), PaymentState.CONNECTION_TIMEOUT);
                 return;
             }
             if (socketTimeoutException.getMessage().contains("Read timed out")) {
-                // TODO: retry
                 tosspaymentsPaymentService.updateState(tosspaymentsPayment.getId(), PaymentState.NEED_CANCEL);
                 return;
             }
