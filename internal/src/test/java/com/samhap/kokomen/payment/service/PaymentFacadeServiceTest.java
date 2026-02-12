@@ -27,6 +27,7 @@ import com.samhap.kokomen.payment.repository.TosspaymentsPaymentResultRepository
 import com.samhap.kokomen.payment.service.dto.CancelRequest;
 import com.samhap.kokomen.payment.service.dto.ConfirmRequest;
 import com.samhap.kokomen.payment.service.dto.PaymentResponse;
+import java.net.ConnectException;
 import java.net.SocketTimeoutException;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -155,6 +156,34 @@ class PaymentFacadeServiceTest extends BaseTest {
     }
 
     @Test
+    void 결제_승인_시_SocketTimeoutException_외_네트워크_오류가_발생하면_NEED_CANCEL_상태로_변경한다() {
+        ConfirmRequest request = createConfirmRequest();
+        when(tosspaymentsClient.confirmPayment(any()))
+                .thenThrow(new ResourceAccessException("I/O error", new ConnectException("Connection refused")));
+
+        assertThatThrownBy(() -> paymentFacadeService.confirmPayment(request))
+                .isInstanceOf(ResourceAccessException.class);
+
+        TosspaymentsPayment payment = tosspaymentsPaymentRepository.findByPaymentKey("payment_key").orElseThrow();
+        assertThat(payment.getState()).isEqualTo(PaymentState.NEED_CANCEL);
+    }
+
+    @Test
+    void 결제_승인_시_400_에러_응답_파싱에_실패하면_InternalServerErrorException을_던진다() {
+        ConfirmRequest request = createConfirmRequest();
+        HttpClientErrorException clientError = mock(HttpClientErrorException.class);
+        when(clientError.getResponseBodyAs(Failure.class)).thenReturn(null);
+        when(tosspaymentsClient.confirmPayment(any())).thenThrow(clientError);
+
+        assertThatThrownBy(() -> paymentFacadeService.confirmPayment(request))
+                .isInstanceOf(InternalServerErrorException.class)
+                .hasMessage(PaymentServiceErrorMessage.CONFIRM_SERVER_ERROR.getMessage());
+
+        TosspaymentsPayment payment = tosspaymentsPaymentRepository.findByPaymentKey("payment_key").orElseThrow();
+        assertThat(payment.getState()).isEqualTo(PaymentState.SERVER_BAD_REQUEST);
+    }
+
+    @Test
     void 결제_승인_시_예상치_못한_예외가_발생하면_NEED_CANCEL_상태로_변경한다() {
         ConfirmRequest request = createConfirmRequest();
         when(tosspaymentsClient.confirmPayment(any())).thenThrow(new RuntimeException("예상치 못한 오류"));
@@ -214,6 +243,17 @@ class PaymentFacadeServiceTest extends BaseTest {
 
         assertThatThrownBy(() -> paymentFacadeService.cancelPayment(new CancelRequest("payment_key", "단순 변심")))
                 .isInstanceOf(BadRequestException.class);
+    }
+
+    @Test
+    void 결제_취소_시_400_에러_응답_파싱에_실패하면_InternalServerErrorException을_던진다() {
+        HttpClientErrorException clientError = mock(HttpClientErrorException.class);
+        when(clientError.getResponseBodyAs(Failure.class)).thenReturn(null);
+        when(tosspaymentsClient.cancelPayment(any(), any())).thenThrow(clientError);
+
+        assertThatThrownBy(() -> paymentFacadeService.cancelPayment(new CancelRequest("payment_key", "단순 변심")))
+                .isInstanceOf(InternalServerErrorException.class)
+                .hasMessage(PaymentServiceErrorMessage.CANCEL_SERVER_ERROR.getMessage());
     }
 
     @Test
