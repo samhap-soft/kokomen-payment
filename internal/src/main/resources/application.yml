@@ -19,3 +19,33 @@ spring:
   config:
     activate:
       on-profile: local
+retry:
+  tosspayments:
+    max-attempts: 3
+    initial-interval: 500
+    multiplier: 2.0
+    max-interval: 2000
+---
+# dev profile
+spring:
+  config:
+    activate:
+      on-profile: dev
+retry:
+  tosspayments:
+    max-attempts: 3
+    initial-interval: 500
+    multiplier: 2.0
+    max-interval: 2000
+---
+# prod profile
+spring:
+  config:
+    activate:
+      on-profile: prod
+retry:
+  tosspayments:
+    max-attempts: 3
+    initial-interval: 500
+    multiplier: 2.0
+    max-interval: 2000

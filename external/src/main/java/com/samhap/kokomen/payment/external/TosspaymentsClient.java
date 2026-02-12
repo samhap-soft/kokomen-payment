@@ -15,9 +15,10 @@ public class TosspaymentsClient {
         this.restClient = tossPaymentsClientBuilder.getTossPaymentsClientBuilder().build();
     }
 
-    public TosspaymentsPaymentResponse confirmPayment(TosspaymentsConfirmRequest request) {
+    public TosspaymentsPaymentResponse confirmPayment(TosspaymentsConfirmRequest request, String idempotencyKey) {
         return restClient.post()
                 .uri("/v1/payments/confirm")
+                .header("Idempotency-Key", idempotencyKey)
                 .body(request)
                 .retrieve()
                 .body(TosspaymentsPaymentResponse.class);
