@@ -12,7 +12,6 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-// TODO: HttpMessageNotReadableException 예외 처리 추가
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
