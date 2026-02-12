@@ -133,6 +133,9 @@ public class PaymentFacadeService {
         } catch (ResourceAccessException e) {
             log.error("결제 취소 네트워크 오류 - paymentKey: {}", request.paymentKey(), e);
             throw new InternalServerErrorException(PaymentServiceErrorMessage.CANCEL_NETWORK_ERROR.getMessage(), e);
+        } catch (Exception e) {
+            log.error("결제 취소 중 예상치 못한 오류 - paymentKey: {}", request.paymentKey(), e);
+            throw new InternalServerErrorException(PaymentServiceErrorMessage.CANCEL_SERVER_ERROR.getMessage(), e);
         }
     }
 }

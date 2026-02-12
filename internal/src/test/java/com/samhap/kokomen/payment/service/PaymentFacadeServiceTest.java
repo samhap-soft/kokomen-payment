@@ -276,6 +276,16 @@ class PaymentFacadeServiceTest extends BaseTest {
                 .hasMessage(PaymentServiceErrorMessage.CANCEL_NETWORK_ERROR.getMessage());
     }
 
+    @Test
+    void 결제_취소_시_예상치_못한_예외가_발생하면_InternalServerErrorException을_던진다() {
+        when(tosspaymentsClient.cancelPayment(any(), any()))
+                .thenThrow(new RuntimeException("예상치 못한 오류"));
+
+        assertThatThrownBy(() -> paymentFacadeService.cancelPayment(new CancelRequest("payment_key", "단순 변심")))
+                .isInstanceOf(InternalServerErrorException.class)
+                .hasMessage(PaymentServiceErrorMessage.CANCEL_SERVER_ERROR.getMessage());
+    }
+
     private ConfirmRequest createConfirmRequest() {
         return new ConfirmRequest("payment_key", "order_id", 10000L, "주문명", 1L, "{}", ServiceType.INTERVIEW);
     }
