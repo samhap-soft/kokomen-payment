@@ -43,27 +43,33 @@ public class PaymentFacadeService {
         } catch (KokomenException | HttpServerErrorException | ResourceAccessException e) {
             // inner에서 상태 처리 완료
             throw e;
-        }  catch (Exception e) {
+        } catch (Exception e) {
             // 예상치 못한 예외만 NEED_CANCEL 설정
             tosspaymentsPaymentService.updateState(tosspaymentsPayment.getId(), PaymentState.NEED_CANCEL);
             throw e;
         }
     }
 
-    private TosspaymentsPaymentResponse confirmPayment(ConfirmRequest request, TosspaymentsPayment tosspaymentsPayment) {
+    private TosspaymentsPaymentResponse confirmPayment(ConfirmRequest request,
+                                                       TosspaymentsPayment tosspaymentsPayment) {
         String idempotencyKey = UUID.randomUUID().toString();
         try {
-            TosspaymentsPaymentResponse tosspaymentsConfirmResponse = tosspaymentsConfirmRetryTemplate.execute(context -> {
-                if (context.getRetryCount() > 0) {
-                    log.warn("토스페이먼츠 결제 승인 재시도 {}/2회, paymentKey = {}",
-                            context.getRetryCount(), request.paymentKey());
-                }
-                return tosspaymentsClient.confirmPayment(request.toTosspaymentsConfirmRequest(), idempotencyKey);
-            });
-            tosspaymentsPayment.validateTosspaymentsResult(tosspaymentsConfirmResponse.paymentKey(), tosspaymentsConfirmResponse.orderId(),
+            TosspaymentsPaymentResponse tosspaymentsConfirmResponse = tosspaymentsConfirmRetryTemplate.execute(
+                    context -> {
+                        if (context.getRetryCount() > 0) {
+                            log.warn("토스페이먼츠 결제 승인 재시도 {}회차, paymentKey = {}",
+                                    context.getRetryCount(), request.paymentKey());
+                        }
+                        return tosspaymentsClient.confirmPayment(request.toTosspaymentsConfirmRequest(),
+                                idempotencyKey);
+                    });
+            tosspaymentsPayment.validateTosspaymentsResult(tosspaymentsConfirmResponse.paymentKey(),
+                    tosspaymentsConfirmResponse.orderId(),
                     tosspaymentsConfirmResponse.totalAmount());
-            TosspaymentsPaymentResult tosspaymentsPaymentResult = tosspaymentsConfirmResponse.toTosspaymentsPaymentResult(tosspaymentsPayment);
-            tosspaymentsTransactionService.applyTosspaymentsPaymentResult(tosspaymentsPaymentResult, PaymentState.COMPLETED);
+            TosspaymentsPaymentResult tosspaymentsPaymentResult = tosspaymentsConfirmResponse.toTosspaymentsPaymentResult(
+                    tosspaymentsPayment);
+            tosspaymentsTransactionService.applyTosspaymentsPaymentResult(tosspaymentsPaymentResult,
+                    PaymentState.COMPLETED);
             return tosspaymentsConfirmResponse;
         } catch (HttpClientErrorException e) {
             throw handleConfirmClientError(e, tosspaymentsPayment);
@@ -76,7 +82,8 @@ public class PaymentFacadeService {
         }
     }
 
-    private RuntimeException handleConfirmClientError(HttpClientErrorException e, TosspaymentsPayment tosspaymentsPayment) {
+    private RuntimeException handleConfirmClientError(HttpClientErrorException e,
+                                                      TosspaymentsPayment tosspaymentsPayment) {
         Failure failure = e.getResponseBodyAs(Failure.class);
         if (failure == null) {
             log.error("토스 결제 실패(400) - 응답 파싱 실패", e);
@@ -104,9 +111,12 @@ public class PaymentFacadeService {
 
     private void handleConfirmServerError(HttpServerErrorException e, TosspaymentsPayment tosspaymentsPayment) {
         try {
-            TosspaymentsPaymentResponse tosspaymentsConfirmResponse = e.getResponseBodyAs(TosspaymentsPaymentResponse.class);
-            TosspaymentsPaymentResult tosspaymentsPaymentResult = tosspaymentsConfirmResponse.toTosspaymentsPaymentResult(tosspaymentsPayment);
-            tosspaymentsTransactionService.applyTosspaymentsPaymentResult(tosspaymentsPaymentResult, PaymentState.NEED_CANCEL);
+            TosspaymentsPaymentResponse tosspaymentsConfirmResponse = e.getResponseBodyAs(
+                    TosspaymentsPaymentResponse.class);
+            TosspaymentsPaymentResult tosspaymentsPaymentResult = tosspaymentsConfirmResponse.toTosspaymentsPaymentResult(
+                    tosspaymentsPayment);
+            tosspaymentsTransactionService.applyTosspaymentsPaymentResult(tosspaymentsPaymentResult,
+                    PaymentState.NEED_CANCEL);
         } catch (Exception parseException) {
             log.warn("토스 5xx 응답 파싱 실패, 상태만 업데이트합니다. paymentId = {}", tosspaymentsPayment.getId(), parseException);
             tosspaymentsPaymentService.updateState(tosspaymentsPayment.getId(), PaymentState.NEED_CANCEL);
@@ -128,9 +138,11 @@ public class PaymentFacadeService {
     }
 
     public void cancelPayment(CancelRequest request) {
-        TosspaymentsPaymentCancelRequest tosspaymentsPaymentCancelRequest = new TosspaymentsPaymentCancelRequest(request.cancelReason());
+        TosspaymentsPaymentCancelRequest tosspaymentsPaymentCancelRequest = new TosspaymentsPaymentCancelRequest(
+                request.cancelReason());
         try {
-            TosspaymentsPaymentResponse response = tosspaymentsClient.cancelPayment(request.paymentKey(), tosspaymentsPaymentCancelRequest);
+            TosspaymentsPaymentResponse response = tosspaymentsClient.cancelPayment(request.paymentKey(),
+                    tosspaymentsPaymentCancelRequest);
             tosspaymentsTransactionService.applyCancelResult(response);
         } catch (HttpClientErrorException e) {
             Failure failure = e.getResponseBodyAs(Failure.class);
@@ -138,7 +150,8 @@ public class PaymentFacadeService {
                 log.error("결제 취소 실패(400) - 응답 파싱 실패, paymentKey: {}", request.paymentKey(), e);
                 throw new InternalServerErrorException(PaymentServiceErrorMessage.CANCEL_SERVER_ERROR.getMessage(), e);
             }
-            log.error("결제 취소 실패(400) - paymentKey: {}, code: {}, message: {}", request.paymentKey(), failure.code(), failure.message());
+            log.error("결제 취소 실패(400) - paymentKey: {}, code: {}, message: {}", request.paymentKey(), failure.code(),
+                    failure.message());
             throw new BadRequestException(failure.message(), e);
         } catch (HttpServerErrorException e) {
             log.error("결제 취소 실패(5xx) - paymentKey: {}, status: {}", request.paymentKey(), e.getStatusCode());
