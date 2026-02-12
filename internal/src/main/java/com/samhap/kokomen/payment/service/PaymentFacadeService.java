@@ -50,7 +50,7 @@ public class PaymentFacadeService {
         try {
             TosspaymentsPaymentResponse tosspaymentsConfirmResponse = tosspaymentsClient.confirmPayment(request.toTosspaymentsConfirmRequest());
             tosspaymentsPayment.validateTosspaymentsResult(tosspaymentsConfirmResponse.paymentKey(), tosspaymentsConfirmResponse.orderId(),
-                    tosspaymentsConfirmResponse.totalAmount(), tosspaymentsConfirmResponse.metadata());
+                    tosspaymentsConfirmResponse.totalAmount());
             TosspaymentsPaymentResult tosspaymentsPaymentResult = tosspaymentsConfirmResponse.toTosspaymentsPaymentResult(tosspaymentsPayment);
             tosspaymentsTransactionService.applyTosspaymentsPaymentResult(tosspaymentsPaymentResult, PaymentState.COMPLETED);
             return tosspaymentsConfirmResponse;

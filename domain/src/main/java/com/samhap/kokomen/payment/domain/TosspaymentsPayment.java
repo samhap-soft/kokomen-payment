@@ -68,7 +68,7 @@ public class TosspaymentsPayment extends BaseEntity {
         this.state = state;
     }
 
-    public void validateTosspaymentsResult(String paymentKey, String orderId, Long totalAmount, String metadata) {
+    public void validateTosspaymentsResult(String paymentKey, String orderId, Long totalAmount) {
         if (!this.paymentKey.equals(paymentKey)) {
             throw new InternalServerErrorException("토스 페이먼츠 응답(%s)의 paymentKey가 DB에 저장된 값(%s)과 다릅니다.".formatted(paymentKey, this.paymentKey));
         }
@@ -78,8 +78,5 @@ public class TosspaymentsPayment extends BaseEntity {
         if (!this.totalAmount.equals(totalAmount)) {
             throw new InternalServerErrorException("토스 페이먼츠 응답(%d)의 totalAmount가 DB에 저장된 값(%d)과 다릅니다.".formatted(totalAmount, this.totalAmount));
         }
-//        if (!this.metadata.equals(metadata)) {
-//            throw new InternalServerErrorException("토스 페이먼츠 응답(%s)의 metadata가 DB에 저장된 값(%s)과 다릅니다.".formatted(metadata, this.metadata));
-//        }
     }
 }
