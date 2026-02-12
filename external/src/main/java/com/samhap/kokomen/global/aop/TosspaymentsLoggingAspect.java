@@ -7,7 +7,6 @@ import org.aspectj.lang.annotation.Aspect;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StopWatch;
-import org.springframework.web.client.HttpClientErrorException;
 
 @Slf4j
 @Order(1)
@@ -24,18 +23,10 @@ public class TosspaymentsLoggingAspect {
 
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
-        try {
-            Object result = joinPoint.proceed();
-            stopWatch.stop();
-            log.info("[토스페이먼츠 API 응답] {} - {}ms - response: {}",
-                    methodName, stopWatch.getTotalTimeMillis(), result);
-            return result;
-        } catch (HttpClientErrorException e) {
-            stopWatch.stop();
-            log.error("[토스페이먼츠 API 실패] {} - {}ms - status: {}, body: {}",
-                    methodName, stopWatch.getTotalTimeMillis(),
-                    e.getStatusCode(), e.getResponseBodyAsString(), e);
-            throw e;
-        }
+        Object result = joinPoint.proceed();
+        stopWatch.stop();
+        log.info("[토스페이먼츠 API 응답] {} - {}ms - response: {}",
+                methodName, stopWatch.getTotalTimeMillis(), result);
+        return result;
     }
 }

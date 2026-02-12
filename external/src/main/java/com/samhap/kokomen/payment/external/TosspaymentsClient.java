@@ -25,7 +25,8 @@ public class TosspaymentsClient {
 
     public TosspaymentsPaymentResponse cancelPayment(
             String paymentKey,
-            TosspaymentsPaymentCancelRequest request) {
+            TosspaymentsPaymentCancelRequest request
+    ) {
         return restClient.post()
                 .uri("/v1/payments/{paymentKey}/cancel", paymentKey)
                 .body(request)
