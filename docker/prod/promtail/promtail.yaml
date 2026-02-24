@@ -8,18 +8,6 @@ clients:
   - url: http://10.0.1.196:3100/loki/api/v1/push
 
 scrape_configs:
-  - job_name: kokomen-payment-api
-    static_configs:
-      - labels:
-          job: kokomen-payment-api
-          app: kokomen-payment-api
-          host: ${HOSTNAME}
-          __path__: /logs/api/app.log
-    pipeline_stages:
-      - regex:
-          expression: '\[.*?\] [\d\-:.\s]+ [^\[\]]+ \[.*?\]\s+(?P<level>[A-Z]+)\s+[^\s]+'
-      - labels:
-          level:
   - job_name: kokomen-payment-internal
     static_configs:
       - labels:

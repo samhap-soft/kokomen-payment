@@ -27,7 +27,6 @@ services:
     volumes:
       - ./promtail/promtail.yaml:/etc/promtail/promtail.yaml
       - ./payment/internal/app/logs:/logs/internal
-      - ./payment/api/app/logs:/logs/api
       - promtail-payment-tmp:/tmp
     command:
       - "-config.file=/etc/promtail/promtail.yaml"
