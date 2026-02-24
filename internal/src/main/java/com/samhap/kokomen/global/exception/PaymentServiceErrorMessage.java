@@ -5,6 +5,8 @@ import lombok.Getter;
 @Getter
 public enum PaymentServiceErrorMessage {
 
+    MISSING_REQUEST_PARAMETER("필수 요청 파라미터가 누락되었습니다."),
+    JSON_PARSE_ERROR("JSON 파싱 오류: 유효하지 않은 값이 전달되었습니다."),
     PAYMENT_NOT_FOUND_BY_ID("해당 id의 결제 정보가 존재하지 않습니다."),
     PAYMENT_NOT_FOUND_BY_PAYMENT_KEY("해당 paymentKey의 결제 정보가 존재하지 않습니다."),
     PAYMENT_RESULT_NOT_FOUND("해당 결제의 결과 정보가 존재하지 않습니다."),

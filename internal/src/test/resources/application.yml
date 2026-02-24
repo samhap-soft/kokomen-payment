@@ -3,7 +3,6 @@ spring:
     include:
       - domain-test
       - common-test
-      - external-test
   main:
     lazy-initialization: true
   jackson:

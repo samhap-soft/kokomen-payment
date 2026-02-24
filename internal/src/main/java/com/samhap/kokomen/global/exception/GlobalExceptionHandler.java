@@ -1,5 +1,6 @@
 package com.samhap.kokomen.global.exception;
 
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.samhap.kokomen.global.dto.ErrorResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.support.DefaultMessageSourceResolvable;
@@ -8,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -44,21 +46,39 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponse> handleHttpMessageNotReadableException(HttpMessageNotReadableException e) {
+        if (e.getCause() instanceof InvalidFormatException invalidFormatException) {
+            String fieldName = invalidFormatException.getPath().get(0).getFieldName();
+            String invalidValue = String.valueOf(invalidFormatException.getValue());
+            log.warn("HttpMessageNotReadableException :: fieldName: {}, invalidValue: {}", fieldName, invalidValue);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(new ErrorResponse(PaymentServiceErrorMessage.JSON_PARSE_ERROR.getMessage()));
+        }
+
         log.warn("HttpMessageNotReadableException :: message: {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(new ErrorResponse(PaymentServiceErrorMessage.INVALID_REQUEST_FORMAT.getMessage()));
     }
 
     @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
-    public ResponseEntity<ErrorResponse> handleHttpMediaTypeNotSupportedException(HttpMediaTypeNotSupportedException e) {
+    public ResponseEntity<ErrorResponse> handleHttpMediaTypeNotSupportedException(
+            HttpMediaTypeNotSupportedException e) {
         log.warn("HttpMediaTypeNotSupportedException :: message: {}", e.getMessage());
         return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
                 .body(new ErrorResponse(e.getMessage()));
     }
 
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ErrorResponse> handleMissingServletRequestParameterException(
+            MissingServletRequestParameterException e) {
+        log.warn("MissingServletRequestParameterException :: parameterName: {}", e.getParameterName());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse(PaymentServiceErrorMessage.MISSING_REQUEST_PARAMETER.getMessage()));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleException(Exception e) {
-        log.error("Exception :: status: {}, message: {}, stackTrace: ", HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), e);
+        log.error("Exception :: status: {}, message: {}, stackTrace: ", HttpStatus.INTERNAL_SERVER_ERROR,
+                e.getMessage(), e);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(new ErrorResponse(PaymentServiceErrorMessage.INTERNAL_SERVER_ERROR.getMessage()));
     }
