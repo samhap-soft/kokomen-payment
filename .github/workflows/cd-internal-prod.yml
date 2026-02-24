@@ -1,4 +1,4 @@
-name: CD INTERNAL PROD
+name: CD PROD
 
 on:
   push:
@@ -18,24 +18,33 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Grant execute permission for run-test-mysql.sh
-        run: chmod +x run-test-mysql.sh
-        working-directory: ./domain
+      - name: Start test containers
+        run: docker compose -f test-docker-compose.yml up -d
 
-      - name: Grant execute permission for run-test-redis.sh
-        run: chmod +x run-test-redis.sh
-        working-directory: ./common
+      - name: Wait for MySQL to be ready
+        run: |
+          for i in $(seq 1 30); do
+            if docker exec payment-test-mysql mysqladmin ping -h localhost --silent 2>/dev/null; then
+              echo "MySQL is ready"
+              break
+            fi
+            echo "Waiting for MySQL... ($i/30)"
+            sleep 2
+          done
 
-      - name: Run test mysql script
-        run: ./run-test-mysql.sh
-        working-directory: ./domain
+      - name: Wait for Redis to be ready
+        run: |
+          for i in $(seq 1 30); do
+            if docker exec payment-test-redis redis-cli ping 2>/dev/null | grep -q PONG; then
+              echo "Redis is ready"
+              break
+            fi
+            echo "Waiting for Redis... ($i/30)"
+            sleep 2
+          done
 
-      - name: Run test redis script
-        run: ./run-test-redis.sh
-        working-directory: ./common
-
-      - name: Test & Build internal only
-        run: ./gradlew :internal:build
+      - name: Test & Build
+        run: ./gradlew build
 
       - name: Sign in Dockerhub
         uses: docker/login-action@v3
@@ -45,11 +54,9 @@ jobs:
 
       - name: Build the Docker image
         run: docker build -f ./Dockerfile --platform linux/arm64 --no-cache -t samhap/kokomen-payment-internal:prod .
-        working-directory: ./internal
 
       - name: Push the Docker Image to Dockerhub
         run: docker push samhap/kokomen-payment-internal:prod
-        working-directory: ./internal
 
   deploy-internal:
     needs: build-internal

@@ -1,0 +1,16 @@
+spring:
+  profiles:
+    include:
+      - domain-test
+      - common-test
+  main:
+    lazy-initialization: true
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+    default-property-inclusion: non_null
+retry:
+  tosspayments:
+    max-attempts: 3
+    initial-interval: 500
+    multiplier: 2.0
+    max-interval: 2000

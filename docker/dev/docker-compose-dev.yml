@@ -21,33 +21,12 @@ services:
     networks:
       - dev-kokomen-net
 
-  kokomen-payment-dev-api:
-    image: samhap/kokomen-payment-api:dev
-    container_name: kokomen-payment-dev-api
-    restart: on-failure:3
-    expose:
-      - 8080
-      - 8001
-    volumes:
-      - ./payment/api/app/logs:/logs
-    environment:
-      TZ: Asia/Seoul
-      JAVA_TOOL_OPTIONS: -Duser.timezone=Asia/Seoul
-      HOSTNAME: ${HOSTNAME}
-      SPRING_PROFILES_ACTIVE: dev
-      SPRING_DATASOURCE_URL_DEV: ${SPRING_DATASOURCE_URL_DEV}
-      SPRING_DATASOURCE_USERNAME_DEV: ${SPRING_DATASOURCE_USERNAME_DEV}
-      SPRING_DATASOURCE_PASSWORD_DEV: ${SPRING_DATASOURCE_PASSWORD_DEV}
-    networks:
-      - dev-kokomen-net
-
   promtail-payment-dev:
     image: grafana/promtail
     container_name: promtail-payment-dev
     volumes:
       - ./promtail/promtail.yaml:/etc/promtail/promtail.yaml
       - ./payment/internal/app/logs:/logs/internal
-      - ./payment/api/app/logs:/logs/api
       - promtail-payment-tmp:/tmp
     command:
       - "-config.file=/etc/promtail/promtail.yaml"
