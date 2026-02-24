@@ -1,4 +1,3 @@
 rootProject.name = 'kokomen-payment'
 
-include 'common'
 include 'internal'
