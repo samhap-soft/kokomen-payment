@@ -6,10 +6,10 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
 @EnableJpaAuditing
 @SpringBootApplication
-public class KokomenPaymentInternalApplication {
+public class KokomenPaymentApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(KokomenPaymentInternalApplication.class, args);
+        SpringApplication.run(KokomenPaymentApplication.class, args);
 
     }
 }

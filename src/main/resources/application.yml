@@ -4,7 +4,7 @@ management:
     port: 8000
 spring:
   application:
-    name: kokomen-payment-internal
+    name: kokomen-payment
   profiles:
     include:
       - domain
